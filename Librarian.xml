@@ -21,21 +21,31 @@
                     <Anchor point="TOPLEFT" relativeTo="$(parent)" offsetX="19" />
                 </Texture>
                 <Label name="$(parent)Found" font="ZoFontWinH2" wrapMode="ELLIPSIS">
-                    <Anchor point="TOPLEFT" relativeTo="$(parent)" offsetX="80" offsetY="1" />
+                    <Anchor point="TOPLEFT" relativeTo="$(parent)" offsetX="90" offsetY="1" />
                 </Label>
                 <Label name="$(parent)Title" font="ZoFontWinH2" wrapMode="ELLIPSIS">
-                    <Anchor point="TOPLEFT" relativeTo="$(parent)" offsetX="270" offsetY="1" />
+                    <Anchor point="TOPLEFT" relativeTo="$(parent)" offsetX="290" offsetY="1" />
                 </Label>
             </Controls>
         </Button>
-        <Button name="SortHeader" resizeToFitDescendents="true" virtual="true">
+        <Button name="SortHeader" virtual="true">
             <OnMouseUp>
                 Librarian:SortBy(self)
             </OnMouseUp>
+            <OnMouseEnter>
+                self:GetNamedChild("Name"):SetColor(ZO_HIGHLIGHT_TEXT:UnpackRGBA())
+            </OnMouseEnter>
+            <OnMouseExit>
+                self:GetNamedChild("Name"):SetColor(ZO_NORMAL_TEXT:UnpackRGBA())
+            </OnMouseExit>
             <Controls>
                 <Label name="$(parent)Name" font="ZoFontGame" color="INTERFACE_COLOR_TYPE_TEXT_COLORS:INTERFACE_TEXT_COLOR_NORMAL" modifyTextType="UPPERCASE" horizontalAlignment="CENTER" verticalAlignment="CENTER" wrapMode="ELLIPSIS">
-                    <AnchorFill />
+                    <Anchor point="TOPLEFT" />
                 </Label>
+                <Texture name="$(parent)Arrow" hidden="true" layer="TEXT">
+                    <Dimensions x="16" y="16"/>
+                    <Anchor point="TOPLEFT" relativeTo="$(parent)Name" relativePoint="TOPRIGHT" offsetY="2" />
+                </Texture>
             </Controls>
         </Button>
         <TopLevelControl name="LibrarianFrame" inherits="ZO_RightPanelFootPrint"  hidden="true">
@@ -45,7 +55,7 @@
                     <Anchor point="BOTTOMRIGHT" relativeTo="$(parent)" relativePoint="TOPRIGHT" offsetY="0" />
                     <Controls>
                         <Button name="$(parent)Unread" inherits="SortHeader">
-                            <Dimensions x="80" y="20" />
+                            <Dimensions x="90" y="20" />
                             <Anchor point="TOPLEFT" />
                             <OnInitialized>
                                 Librarian:InitialiseSortHeader(self, SI_LIBRARIAN_SORT_TYPE_UNREAD, "Unread")
@@ -53,7 +63,7 @@
                         </Button>
                         <Button name="$(parent)Time" inherits="SortHeader">
                             <Dimensions x="200" y="20" />
-                            <Anchor point="TOPLEFT" relativeTo="$(parent)Unread" relativePoint="TOPRIGHT" />
+                            <Anchor point="TOPLEFT" offsetX="90" />
                             <OnInitialized>
                                 Librarian:InitialiseSortHeader(self, SI_LIBRARIAN_SORT_TYPE_FOUND, "Found")
                             </OnInitialized>

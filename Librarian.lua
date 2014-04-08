@@ -10,6 +10,9 @@ ZO_CreateStringId("SI_LIBRARIAN_SORT_TYPE_TITLE", "Title")
 ZO_CreateStringId("SI_LIBRARIAN_MARK_UNREAD", "Mark as Unread")
 ZO_CreateStringId("SI_LIBRARIAN_MARK_READ", "Mark as Read")
 
+local SORT_ARROW_UP = "EsoUI/Art/Miscellaneous/list_sortUp.dds"
+local SORT_ARROW_DOWN = "EsoUI/Art/Miscellaneous/list_sortDown.dds"
+
 local previousBook
 local scrollChild
 local sortField = "Found"
@@ -19,7 +22,7 @@ function Librarian:Initialise()
  	scrollChild = LibrarianFrameScrollContainer:GetNamedChild("ScrollChild")
 	self.savedVars = ZO_SavedVars:New("Librarian_SavedVariables", 1, nil, self.defaults, nil)
 
-	self:LayoutBooks()
+	self:SortBooks()
 
 	self:InitializeKeybindStripDescriptors()
 	self:InitializeScene()
@@ -154,25 +157,46 @@ function Librarian:SortBy(control)
 		sortAscending = true
 	end
 
+	self:SortBooks()
+end
+
+function Librarian:SortBooks()
+	local control
+
 	if sortField == "Unread" then
+		control = LibrarianFrameSortByUnread
 		if sortAscending then
 			table.sort(self.savedVars.books, function(a, b) return a.unread and not b.unread end)
 		else 
 			table.sort(self.savedVars.books, function(a, b) return not a.unread and b.unread end)
 		end
 	elseif sortField == "Found" then
+		control = LibrarianFrameSortByTime
 		if sortAscending then
 			table.sort(self.savedVars.books, function(a, b) return a.timeStamp < b.timeStamp end)
 		else
 			table.sort(self.savedVars.books, function(a, b) return a.timeStamp > b.timeStamp end)
 		end
 	elseif sortField == "Title" then
+		control = LibrarianFrameSortByTitle
 		if sortAscending then
 			table.sort(self.savedVars.books, function(a, b) return a.title < b.title end)
 		else
 			table.sort(self.savedVars.books, function(a, b) return a.title > b.title end)
 		end
 	end
+
+	LibrarianFrameSortByUnread:GetNamedChild("Arrow"):SetHidden(true)
+	LibrarianFrameSortByTime:GetNamedChild("Arrow"):SetHidden(true)
+	LibrarianFrameSortByTitle:GetNamedChild("Arrow"):SetHidden(true)
+
+	local arrow = control:GetNamedChild("Arrow")
+	if sortAscending then
+		arrow:SetTexture(SORT_ARROW_DOWN)
+	else 
+		arrow:SetTexture(SORT_ARROW_UP)
+	end
+	arrow:SetHidden(false)
 
 	self:LayoutBooks()
 end
