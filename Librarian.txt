@@ -1,0 +1,8 @@
+## Title: Librarian
+## Author: Flamage
+## APIVersion: 100003
+## SavedVariables: Librarian_SavedVariables
+
+Librarian.lua
+Librarian.xml
+Bindings.xml

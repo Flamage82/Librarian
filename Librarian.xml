@@ -1,0 +1,65 @@
+<GuiXml>
+    <Controls>
+        <Button name="LibrarianBook" resizeToFitDescendents="true" virtual="true">
+            <Anchor point="RIGHT" relativeTo="$(parent)" />
+            <OnMouseUp>
+                Librarian:ReadBook(self.id)
+            </OnMouseUp>
+            <OnMouseEnter>
+                Librarian:OnMouseEnter(self)
+            </OnMouseEnter>
+            <OnMouseExit>
+                Librarian:OnMouseExit(self)
+            </OnMouseExit>
+            <Controls>
+                <Texture name="$(parent)Highlight" textureFile="EsoUI/Art/Miscellaneous/listItem_highlight.dds" alpha="0">
+                    <AnchorFill />
+                    <TextureCoords left="0" right="1" top="0" bottom=".625" />
+                </Texture>
+                <Texture name="$(parent)Unread" textureFile="EsoUI/Art/Inventory/newitem_icon.dds">
+                    <Dimensions x="32" y="32" />
+                    <Anchor point="TOPLEFT" relativeTo="$(parent)" offsetX="19" />
+                </Texture>
+                <Label name="$(parent)Found" font="ZoFontWinH2" wrapMode="ELLIPSIS">
+                    <Anchor point="TOPLEFT" relativeTo="$(parent)" offsetX="70" offsetY="1" />
+                </Label>
+                <Label name="$(parent)Title" font="ZoFontWinH2" wrapMode="ELLIPSIS">
+                    <Anchor point="TOPLEFT" relativeTo="$(parent)" offsetX="270" offsetY="1" />
+                </Label>
+            </Controls>
+        </Button>
+        <TopLevelControl name="LibrarianFrame" inherits="ZO_RightPanelFootPrint" hidden="true">
+            <Controls>
+                <Control name="$(parent)SortBy" resizeToFitDescendents="true">
+                    <Anchor point="TOPLEFT" offsetY="10" />
+                    <Controls>
+                        <Control name="$(parent)Unread" inherits="ZO_SortHeader">
+                            <Dimensions x="70" />
+                            <Anchor point="LEFT" />
+                            <OnInitialized>
+                                ZO_PlayerInventory_InitSortHeader(self, SI_LIBRARIAN_SORT_TYPE_UNREAD, TEXT_ALIGN_LEFT, "unread")
+                            </OnInitialized>
+                        </Control>
+                        <Control name="$(parent)Time" inherits="ZO_SortHeader">
+                            <Dimensions x="200" />
+                            <Anchor point="TOPLEFT" relativeTo="$(parent)Unread" relativePoint="TOPRIGHT" />
+                            <OnInitialized>
+                                ZO_PlayerInventory_InitSortHeader(self, SI_LIBRARIAN_SORT_TYPE_FOUND, TEXT_ALIGN_LEFT, "found")
+                            </OnInitialized>
+                        </Control>
+                        <Control name="$(parent)Name" inherits="ZO_SortHeader">
+                            <Anchor point="TOPLEFT" relativeTo="$(parent)Time" relativePoint="TOPRIGHT" />
+                            <OnInitialized>
+                                ZO_PlayerInventory_InitSortHeader(self, SI_LIBRARIAN_SORT_TYPE_TITLE, TEXT_ALIGN_LEFT, "title")
+                            </OnInitialized>
+                        </Control>
+                    </Controls>
+                </Control>
+                <Control name="$(parent)ScrollContainer" color="CFDCBD" inherits="ZO_ScrollContainer">
+                    <Anchor point="TOPLEFT" relativeTo="$(parent)SortBy" relativePoint="BOTTOMLEFT" offsetY="30" />
+                    <Anchor point="BOTTOMRIGHT" offsetX="-12" offsetY="0" />
+                </Control>
+            </Controls>
+        </TopLevelControl>
+    </Controls>
+</GuiXml>
