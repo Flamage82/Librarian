@@ -12,12 +12,12 @@ ZO_CreateStringId("SI_LIBRARIAN_MARK_READ", "Mark as Read")
 
 local previousBook
 local scrollChild
+local sortField = "Found"
+local sortAscending = true
 
 function Librarian:Initialise()
  	scrollChild = LibrarianFrameScrollContainer:GetNamedChild("ScrollChild")
 	self.savedVars = ZO_SavedVars:New("Librarian_SavedVariables", 1, nil, self.defaults, nil)
-
-	--local manager = ZO_SortFilterList.New(self, LibrarianFrameScrollContainer)
 
 	self:LayoutBooks()
 
@@ -106,14 +106,19 @@ end
 
 function Librarian:LayoutBooks()
     ZO_Scroll_ResetToTop(LibrarianFrameScrollContainer)
+    previousBook = nil
     for i, book in ipairs(self.savedVars.books) do
 		self:LayoutBook(i, book)
     end
 end
 
 function Librarian:LayoutBook(i, book)
-	local bookControl = CreateControlFromVirtual("LibrarianBook", scrollChild, "LibrarianBook", i)
-	bookControl.id = i
+	local bookControl = GetControl("LibrarianBook"..i)
+	if not bookControl then
+		bookControl = CreateControlFromVirtual("LibrarianBook", scrollChild, "LibrarianBook", i)
+		bookControl.id = i
+	end
+	
 	bookControl.unread = bookControl:GetNamedChild("Unread")
 	bookControl.found = bookControl:GetNamedChild("Found")
 	bookControl.title = bookControl:GetNamedChild("Title")
@@ -128,6 +133,48 @@ function Librarian:LayoutBook(i, book)
     	bookControl:SetAnchor(TOPLEFT, previousBook, BOTTOMLEFT)
     end
     previousBook = bookControl
+end
+
+function Librarian:InitialiseSortHeader(control, name, tag)
+	control.tag = tag
+	local nameControl = GetControl(control, "Name")
+    nameControl:SetFont("ZoFontHeader")
+    nameControl:SetText(GetString(name))
+    nameControl:SetHorizontalAlignment(alignment or TEXT_ALIGN_LEFT)
+    control.initialDirection = initialDirection or ZO_SORT_ORDER_DOWN
+    control.usesArrow = true
+end
+
+function Librarian:SortBy(control)
+	local field = control.tag
+	if field == sortField then
+		sortAscending = not sortAscending
+	else
+		sortField = field
+		sortAscending = true
+	end
+
+	if sortField == "Unread" then
+		if sortAscending then
+			table.sort(self.savedVars.books, function(a, b) return a.unread and not b.unread end)
+		else 
+			table.sort(self.savedVars.books, function(a, b) return not a.unread and b.unread end)
+		end
+	elseif sortField == "Found" then
+		if sortAscending then
+			table.sort(self.savedVars.books, function(a, b) return a.timeStamp < b.timeStamp end)
+		else
+			table.sort(self.savedVars.books, function(a, b) return a.timeStamp > b.timeStamp end)
+		end
+	elseif sortField == "Title" then
+		if sortAscending then
+			table.sort(self.savedVars.books, function(a, b) return a.title < b.title end)
+		else
+			table.sort(self.savedVars.books, function(a, b) return a.title > b.title end)
+		end
+	end
+
+	self:LayoutBooks()
 end
 
 function Librarian:ReadBook(id)

@@ -21,41 +21,53 @@
                     <Anchor point="TOPLEFT" relativeTo="$(parent)" offsetX="19" />
                 </Texture>
                 <Label name="$(parent)Found" font="ZoFontWinH2" wrapMode="ELLIPSIS">
-                    <Anchor point="TOPLEFT" relativeTo="$(parent)" offsetX="70" offsetY="1" />
+                    <Anchor point="TOPLEFT" relativeTo="$(parent)" offsetX="80" offsetY="1" />
                 </Label>
                 <Label name="$(parent)Title" font="ZoFontWinH2" wrapMode="ELLIPSIS">
                     <Anchor point="TOPLEFT" relativeTo="$(parent)" offsetX="270" offsetY="1" />
                 </Label>
             </Controls>
         </Button>
-        <TopLevelControl name="LibrarianFrame" inherits="ZO_RightPanelFootPrint" hidden="true">
+        <Button name="SortHeader" resizeToFitDescendents="true" virtual="true">
+            <OnMouseUp>
+                Librarian:SortBy(self)
+            </OnMouseUp>
             <Controls>
-                <Control name="$(parent)SortBy" resizeToFitDescendents="true">
-                    <Anchor point="TOPLEFT" offsetY="10" />
+                <Label name="$(parent)Name" font="ZoFontGame" color="INTERFACE_COLOR_TYPE_TEXT_COLORS:INTERFACE_TEXT_COLOR_NORMAL" modifyTextType="UPPERCASE" horizontalAlignment="CENTER" verticalAlignment="CENTER" wrapMode="ELLIPSIS">
+                    <AnchorFill />
+                </Label>
+            </Controls>
+        </Button>
+        <TopLevelControl name="LibrarianFrame" inherits="ZO_RightPanelFootPrint"  hidden="true">
+            <Controls>
+                <Control name="$(parent)SortBy">
+                    <Anchor point="TOPLEFT" relativeTo="$(parent)" offsetY="10" />
+                    <Anchor point="BOTTOMRIGHT" relativeTo="$(parent)" relativePoint="TOPRIGHT" offsetY="0" />
                     <Controls>
-                        <Control name="$(parent)Unread" inherits="ZO_SortHeader">
-                            <Dimensions x="70" />
-                            <Anchor point="LEFT" />
+                        <Button name="$(parent)Unread" inherits="SortHeader">
+                            <Dimensions x="80" y="20" />
+                            <Anchor point="TOPLEFT" />
                             <OnInitialized>
-                                ZO_PlayerInventory_InitSortHeader(self, SI_LIBRARIAN_SORT_TYPE_UNREAD, TEXT_ALIGN_LEFT, "unread")
+                                Librarian:InitialiseSortHeader(self, SI_LIBRARIAN_SORT_TYPE_UNREAD, "Unread")
                             </OnInitialized>
-                        </Control>
-                        <Control name="$(parent)Time" inherits="ZO_SortHeader">
-                            <Dimensions x="200" />
+                        </Button>
+                        <Button name="$(parent)Time" inherits="SortHeader">
+                            <Dimensions x="200" y="20" />
                             <Anchor point="TOPLEFT" relativeTo="$(parent)Unread" relativePoint="TOPRIGHT" />
                             <OnInitialized>
-                                ZO_PlayerInventory_InitSortHeader(self, SI_LIBRARIAN_SORT_TYPE_FOUND, TEXT_ALIGN_LEFT, "found")
+                                Librarian:InitialiseSortHeader(self, SI_LIBRARIAN_SORT_TYPE_FOUND, "Found")
                             </OnInitialized>
-                        </Control>
-                        <Control name="$(parent)Name" inherits="ZO_SortHeader">
+                        </Button>
+                        <Button name="$(parent)Title" inherits="SortHeader">
                             <Anchor point="TOPLEFT" relativeTo="$(parent)Time" relativePoint="TOPRIGHT" />
+                            <Anchor point="BOTTOMRIGHT" relativeTo="$(parent)" relativePoint="TOPRIGHT" offsetY="20" />
                             <OnInitialized>
-                                ZO_PlayerInventory_InitSortHeader(self, SI_LIBRARIAN_SORT_TYPE_TITLE, TEXT_ALIGN_LEFT, "title")
+                                Librarian:InitialiseSortHeader(self, SI_LIBRARIAN_SORT_TYPE_TITLE, "Title")
                             </OnInitialized>
-                        </Control>
+                        </Button>
                     </Controls>
                 </Control>
-                <Control name="$(parent)ScrollContainer" color="CFDCBD" inherits="ZO_ScrollContainer">
+                <Control name="$(parent)ScrollContainer" inherits="ZO_ScrollContainer">
                     <Anchor point="TOPLEFT" relativeTo="$(parent)SortBy" relativePoint="BOTTOMLEFT" offsetY="30" />
                     <Anchor point="BOTTOMRIGHT" offsetX="-12" offsetY="0" />
                 </Control>
