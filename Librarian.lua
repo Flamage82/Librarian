@@ -94,8 +94,7 @@ end
 function Librarian:AddBook(title, body, medium, showTitle)
 	local book = {title = title, body = body, medium = medium, showTitle = showTitle, timeStamp = GetTimeStamp(), unread = true}
 	table.insert(self.savedVars.books, book)
-	local i = #self.savedVars.books
-	self:LayoutBook(i, book)
+	self:SortBooks()
 	d("New book added!")
 end
 
