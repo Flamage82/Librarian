@@ -16,7 +16,7 @@ local SORT_ARROW_DOWN = "EsoUI/Art/Miscellaneous/list_sortDown.dds"
 local previousBook
 local scrollChild
 local sortField = "Found"
-local sortAscending = true
+local sortAscending = false
 
 function Librarian:Initialise()
  	scrollChild = LibrarianFrameScrollContainer:GetNamedChild("ScrollChild")
@@ -126,9 +126,8 @@ function Librarian:LayoutBook(i, book)
 	bookControl.found = bookControl:GetNamedChild("Found")
 	bookControl.title = bookControl:GetNamedChild("Title")
 	if book.unread then bookControl.unread:SetAlpha(1) else bookControl.unread:SetAlpha(0) end
-	local date = GetDateStringFromTimestamp(book.timeStamp)
-	local time = ZO_FormatTime(book.timeStamp, TIME_FORMAT_STYLE_CLOCK_TIME, TIME_FORMAT_PRECISION_SECONDS, TIME_FORMAT_DIRECTION_DESCENDING)
-	bookControl.found:SetText(string.format("%s %s", date, time))
+	
+	bookControl.found:SetText(self:FormatClockTime(book.timeStamp))
 	bookControl.title:SetText(book.title)
 	if not previousBook then
     	bookControl:SetAnchor(TOPLEFT, scrollChild, TOPLEFT)
@@ -232,6 +231,23 @@ function Librarian:OnMouseExit(buttonPart)
     KEYBIND_STRIP:RemoveKeybindButtonGroup(self.keybindStripDescriptor)
 end
 
+function Librarian:FormatClockTime(time)
+    if(CLOCK_FORMAT == nil) then
+        CLOCK_FORMAT = (GetCVar("Language.2") == "en") and TIME_FORMAT_PRECISION_TWELVE_HOUR or TIME_FORMAT_PRECISION_TWENTY_FOUR_HOUR
+    end
+
+    local midnightSeconds = GetSecondsSinceMidnight()
+    local utcSeconds = GetTimeStamp() % 86400
+    local offset = midnightSeconds - utcSeconds
+    if offset < -43200 then
+    	offset = offset + 86400
+    end
+
+    local dateString = GetDateStringFromTimestamp(time)
+    local timeString = ZO_FormatTime(time + offset, TIME_FORMAT_STYLE_CLOCK_TIME, CLOCK_FORMAT)
+	return string.format("%s %s", dateString, timeString)
+end
+
 local function SlashCommand(args)
 	Librarian:Toggle()
 end
@@ -246,8 +262,6 @@ local function OnShowBook(eventCode, title, body, medium, showTitle)
 	Librarian:StoreBook(title, body, medium, showTitle)
 end
 
-SLASH_COMMANDS["/l"] = SlashCommand 
-SLASH_COMMANDS["/lib"] = SlashCommand
 SLASH_COMMANDS["/librarian"] = SlashCommand
 
 EVENT_MANAGER:RegisterForEvent("Librarian", EVENT_ADD_ON_LOADED, OnAddonLoaded) 

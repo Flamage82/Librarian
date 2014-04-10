@@ -39,7 +39,7 @@
                 self:GetNamedChild("Name"):SetColor(ZO_NORMAL_TEXT:UnpackRGBA())
             </OnMouseExit>
             <Controls>
-                <Label name="$(parent)Name" font="ZoFontGame" color="INTERFACE_COLOR_TYPE_TEXT_COLORS:INTERFACE_TEXT_COLOR_NORMAL" modifyTextType="UPPERCASE" horizontalAlignment="CENTER" verticalAlignment="CENTER" wrapMode="ELLIPSIS">
+                <Label name="$(parent)Name" font="ZoFontGame" color="INTERFACE_TEXT_COLOR_NORMAL" modifyTextType="UPPERCASE" horizontalAlignment="CENTER" verticalAlignment="CENTER" wrapMode="ELLIPSIS">
                     <Anchor point="TOPLEFT" />
                 </Label>
                 <Texture name="$(parent)Arrow" hidden="true" layer="TEXT">
@@ -50,6 +50,9 @@
         </Button>
         <TopLevelControl name="LibrarianFrame" inherits="ZO_RightPanelFootPrint"  hidden="true">
             <Controls>
+                <Label text="by Flamage" font="ZoFontGame" color="INTERFACE_COLOR_TYPE_TEXT_COLORS:INTERFACE_TEXT_COLOR_DISABLED">
+                    <Anchor point="TOPRIGHT" offsetX="-15" offsetY="-27" />
+                </Label>
                 <Control name="$(parent)SortBy">
                     <Anchor point="TOPLEFT" relativeTo="$(parent)" offsetY="10" />
                     <Anchor point="BOTTOMRIGHT" relativeTo="$(parent)" relativePoint="TOPRIGHT" offsetY="0" />
