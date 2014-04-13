@@ -10,6 +10,8 @@ ZO_CreateStringId("SI_LIBRARIAN_SORT_TYPE_TITLE", "Title")
 ZO_CreateStringId("SI_LIBRARIAN_SORT_TYPE_WORD_COUNT", "Words")
 ZO_CreateStringId("SI_LIBRARIAN_MARK_UNREAD", "Mark as Unread")
 ZO_CreateStringId("SI_LIBRARIAN_MARK_READ", "Mark as Read")
+ZO_CreateStringId("SI_LIBRARIAN_CREDIT", "by Flamage")
+ZO_CreateStringId("SI_LIBRARIAN_BOOK_COUNT", "%d Books")
 
 local SORT_ARROW_UP = "EsoUI/Art/Miscellaneous/list_sortUp.dds"
 local SORT_ARROW_DOWN = "EsoUI/Art/Miscellaneous/list_sortDown.dds"
@@ -115,6 +117,9 @@ function Librarian:LayoutBooks()
     for i, book in ipairs(self.savedVars.books) do
 		self:LayoutBook(i, book)
     end
+
+    local bookCount = table.getn(self.savedVars.books)
+    LibrarianFrameBookCount:SetText(string.format(GetString(SI_LIBRARIAN_BOOK_COUNT), bookCount))
 end
 
 function Librarian:LayoutBook(i, book)
@@ -151,6 +156,7 @@ function Librarian:InitialiseSortHeader(control, name, tag)
 	control.tag = tag
 	local nameControl = GetControl(control, "Name")
     nameControl:SetFont("ZoFontHeader")
+    nameControl:SetColor(ZO_NORMAL_TEXT:UnpackRGBA())
     nameControl:SetText(GetString(name))
     nameControl:SetHorizontalAlignment(alignment or TEXT_ALIGN_LEFT)
     control.initialDirection = initialDirection or ZO_SORT_ORDER_DOWN

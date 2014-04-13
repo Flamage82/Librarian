@@ -32,7 +32,7 @@
                 </Label>
             </Controls>
         </Button>
-        <Button name="SortHeader" virtual="true">
+        <Button name="LibrarianSortHeader" virtual="true">
             <OnMouseUp>
                 Librarian:SortBy(self)
             </OnMouseUp>
@@ -54,35 +54,35 @@
         </Button>
         <TopLevelControl name="LibrarianFrame" inherits="ZO_RightPanelFootPrint"  hidden="true">
             <Controls>
-                <Label text="by Flamage" font="ZoFontGame" color="INTERFACE_COLOR_TYPE_TEXT_COLORS:INTERFACE_TEXT_COLOR_DISABLED">
-                    <Anchor point="TOPRIGHT" offsetX="-15" offsetY="-27" />
+                <Label name="$(parent)BookCount" font="ZoFontWindowTitle" color="INTERFACE_COLOR_TYPE_TEXT_COLORS:INTERFACE_TEXT_COLOR_SELECTED" modifyTextType="UPPERCASE">
+                    <Anchor point="TOPRIGHT" offsetX="-15" offsetY="-40" />
                 </Label>
                 <Control name="$(parent)SortBy">
                     <Anchor point="TOPLEFT" relativeTo="$(parent)" offsetY="10" />
                     <Anchor point="BOTTOMRIGHT" relativeTo="$(parent)" relativePoint="TOPRIGHT" offsetY="0" />
                     <Controls>
-                        <Button name="$(parent)Unread" inherits="SortHeader">
+                        <Button name="$(parent)Unread" inherits="LibrarianSortHeader">
                             <Dimensions x="90" y="20" />
                             <Anchor point="TOPLEFT" />
                             <OnInitialized>
                                 Librarian:InitialiseSortHeader(self, SI_LIBRARIAN_SORT_TYPE_UNREAD, "Unread")
                             </OnInitialized>
                         </Button>
-                        <Button name="$(parent)Time" inherits="SortHeader">
+                        <Button name="$(parent)Time" inherits="LibrarianSortHeader">
                             <Dimensions x="200" y="20" />
                             <Anchor point="TOPLEFT" offsetX="90" />
                             <OnInitialized>
                                 Librarian:InitialiseSortHeader(self, SI_LIBRARIAN_SORT_TYPE_FOUND, "Found")
                             </OnInitialized>
                         </Button>
-                        <Button name="$(parent)Title" inherits="SortHeader">
+                        <Button name="$(parent)Title" inherits="LibrarianSortHeader">
                             <Anchor point="TOPLEFT" relativeTo="$(parent)Time" relativePoint="TOPRIGHT" />
                             <Anchor point="BOTTOMRIGHT" relativeTo="$(parent)" relativePoint="TOPRIGHT" offsetY="20" />
                             <OnInitialized>
                                 Librarian:InitialiseSortHeader(self, SI_LIBRARIAN_SORT_TYPE_TITLE, "Title")
                             </OnInitialized>
                         </Button>
-                        <Button name="$(parent)WordCount" inherits="SortHeader">
+                        <Button name="$(parent)WordCount" inherits="LibrarianSortHeader">
                             <Dimensions x="80" y="20" />
                             <Anchor point="TOPRIGHT" relativeTo="$(parent)" relativePoint="TOPRIGHT" offsetX="-10" />
                             <OnInitialized>
@@ -95,6 +95,12 @@
                     <Anchor point="TOPLEFT" relativeTo="$(parent)SortBy" relativePoint="BOTTOMLEFT" offsetY="30" />
                     <Anchor point="BOTTOMRIGHT" offsetX="-12" offsetY="0" />
                 </Control>
+                <Label name="$(parent)Credit" font="ZoFontGame" color="INTERFACE_COLOR_TYPE_TEXT_COLORS:INTERFACE_TEXT_COLOR_DISABLED">
+                    <Anchor point="BOTTOMRIGHT" offsetX="-15" offsetY="27" />
+                    <OnInitialized>
+                        self:SetText(GetString(SI_LIBRARIAN_CREDIT))
+                    </OnInitialized>
+                </Label>
             </Controls>
         </TopLevelControl>
     </Controls>
