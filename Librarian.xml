@@ -1,6 +1,7 @@
 <GuiXml>
     <Controls>
-        <Button name="LibrarianBook" resizeToFitDescendents="true" virtual="true">
+        <Button name="LibrarianBook" virtual="true">
+            <Dimensions y="30" />
             <Anchor point="RIGHT" relativeTo="$(parent)" />
             <OnMouseUp>
                 Librarian:ReadBook(self.id)
@@ -22,6 +23,9 @@
                 </Texture>
                 <Label name="$(parent)Found" font="ZoFontWinH2" wrapMode="ELLIPSIS">
                     <Anchor point="TOPLEFT" relativeTo="$(parent)" offsetX="90" offsetY="1" />
+                </Label>
+                <Label name="$(parent)WordCount" font="ZoFontWinH2" wrapMode="ELLIPSIS">
+                    <Anchor point="TOPRIGHT" relativeTo="$(parent)" offsetY="1" />
                 </Label>
                 <Label name="$(parent)Title" font="ZoFontWinH2" wrapMode="ELLIPSIS">
                     <Anchor point="TOPLEFT" relativeTo="$(parent)" offsetX="290" offsetY="1" />
@@ -76,6 +80,13 @@
                             <Anchor point="BOTTOMRIGHT" relativeTo="$(parent)" relativePoint="TOPRIGHT" offsetY="20" />
                             <OnInitialized>
                                 Librarian:InitialiseSortHeader(self, SI_LIBRARIAN_SORT_TYPE_TITLE, "Title")
+                            </OnInitialized>
+                        </Button>
+                        <Button name="$(parent)WordCount" inherits="SortHeader">
+                            <Dimensions x="80" y="20" />
+                            <Anchor point="TOPRIGHT" relativeTo="$(parent)" relativePoint="TOPRIGHT" offsetX="-10" />
+                            <OnInitialized>
+                                Librarian:InitialiseSortHeader(self, SI_LIBRARIAN_SORT_TYPE_WORD_COUNT, "WordCount")
                             </OnInitialized>
                         </Button>
                     </Controls>

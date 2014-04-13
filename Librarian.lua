@@ -7,6 +7,7 @@ ZO_CreateStringId("SI_WINDOW_TITLE_LIBRARIAN", "Librarian")
 ZO_CreateStringId("SI_LIBRARIAN_SORT_TYPE_UNREAD", "Unread")
 ZO_CreateStringId("SI_LIBRARIAN_SORT_TYPE_FOUND", "Found")
 ZO_CreateStringId("SI_LIBRARIAN_SORT_TYPE_TITLE", "Title")
+ZO_CreateStringId("SI_LIBRARIAN_SORT_TYPE_WORD_COUNT", "Words")
 ZO_CreateStringId("SI_LIBRARIAN_MARK_UNREAD", "Mark as Unread")
 ZO_CreateStringId("SI_LIBRARIAN_MARK_READ", "Mark as Read")
 
@@ -20,6 +21,7 @@ local sortAscending = false
 
 function Librarian:Initialise()
  	scrollChild = LibrarianFrameScrollContainer:GetNamedChild("ScrollChild")
+ 	scrollChild:SetAnchor(TOPRIGHT, nil, TOPRIGHT, -5, 0)
 	self.savedVars = ZO_SavedVars:New("Librarian_SavedVariables", 1, nil, self.defaults, nil)
 
 	self:SortBooks()
@@ -95,7 +97,8 @@ function Librarian:AddBook(title, body, medium, showTitle)
 	local book = {title = title, body = body, medium = medium, showTitle = showTitle, timeStamp = GetTimeStamp(), unread = true}
 	table.insert(self.savedVars.books, book)
 	self:SortBooks()
-	d("New book added!")
+	d("Book added to Librarian.")
+	--ZO_CenterScreenAnnounce_GetAnnounceObject():AddMessage(EVENT_SKILL_RANK_UPDATE, CSA_EVENT_LARGE_TEXT, SOUNDS.SKILL_LINE_LEVELED_UP, "Test")
 end
 
 function Librarian:Toggle()
@@ -124,10 +127,18 @@ function Librarian:LayoutBook(i, book)
 	bookControl.unread = bookControl:GetNamedChild("Unread")
 	bookControl.found = bookControl:GetNamedChild("Found")
 	bookControl.title = bookControl:GetNamedChild("Title")
+	bookControl.wordCount = bookControl:GetNamedChild("WordCount")
+
 	if book.unread then bookControl.unread:SetAlpha(1) else bookControl.unread:SetAlpha(0) end
-	
 	bookControl.found:SetText(self:FormatClockTime(book.timeStamp))
 	bookControl.title:SetText(book.title)
+	if not book.wordCount then
+		local wordCount = 0
+		for w in book.body:gmatch("%S+") do wordCount = wordCount + 1 end
+		book.wordCount = wordCount
+	end
+	bookControl.wordCount:SetText(book.wordCount)
+
 	if not previousBook then
     	bookControl:SetAnchor(TOPLEFT, scrollChild, TOPLEFT)
     else
@@ -181,6 +192,13 @@ function Librarian:SortBooks()
 			table.sort(self.savedVars.books, function(a, b) return a.title < b.title end)
 		else
 			table.sort(self.savedVars.books, function(a, b) return a.title > b.title end)
+		end
+	elseif sortField == "WordCount" then
+		control = LibrarianFrameSortByWordCount
+		if sortAscending then
+			table.sort(self.savedVars.books, function(a, b) return a.wordCount < b.wordCount end)
+		else
+			table.sort(self.savedVars.books, function(a, b) return a.wordCount > b.wordCount end)
 		end
 	end
 
