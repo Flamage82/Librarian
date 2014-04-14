@@ -267,7 +267,7 @@ function Librarian:FormatClockTime(time)
     end
 
     local dateString = GetDateStringFromTimestamp(time)
-    local timeString = ZO_FormatTime(time + offset, TIME_FORMAT_STYLE_CLOCK_TIME, CLOCK_FORMAT)
+    local timeString = ZO_FormatTime((time + offset) % 86400, TIME_FORMAT_STYLE_CLOCK_TIME, CLOCK_FORMAT)
 	return string.format("%s %s", dateString, timeString)
 end
 
