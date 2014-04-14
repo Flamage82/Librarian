@@ -21,15 +21,42 @@ local scrollChild
 local sortField = "Found"
 local sortAscending = false
 
+local time_formats = {
+	{ name = "12 hour", value = TIME_FORMAT_PRECISION_TWELVE_HOUR}, 
+	{ name = "24 hour", value = TIME_FORMAT_PRECISION_TWENTY_FOUR_HOUR}
+}
+
 function Librarian:Initialise()
  	scrollChild = LibrarianFrameScrollContainer:GetNamedChild("ScrollChild")
  	scrollChild:SetAnchor(TOPRIGHT, nil, TOPRIGHT, -5, 0)
 	self.savedVars = ZO_SavedVars:New("Librarian_SavedVariables", 1, nil, self.defaults, nil)
 
+	if self.savedVars.setting_time_format == nil then
+		self.savedVars.setting_time_format = (GetCVar("Language.2") == "en") and TIME_FORMAT_PRECISION_TWELVE_HOUR or TIME_FORMAT_PRECISION_TWENTY_FOUR_HOUR
+	end
+
+	self:InitialiseSettings()
+
 	self:SortBooks()
 
 	self:InitializeKeybindStripDescriptors()
 	self:InitializeScene()
+end
+
+function Librarian:InitialiseSettings()
+	local LAM = LibStub("LibAddonMenu-1.0")
+	local optionsPanel = LAM:CreateControlPanel("LibrarianOptions", "Librarian")
+
+	local time_formats_list = map(time_formats, function(item) return item.name end)
+	d(self.savedVars.setting_time_format)
+	
+	LAM:AddDropdown(optionsPanel, "LibrarianOptionsTimeFormat", "Time Format",
+					"Select a format to display times in.", time_formats_list,
+					function() return getName(time_formats, self.savedVars.setting_time_format) end,
+					function(format) 
+						self.savedVars.setting_time_format = getValue(time_formats, format)
+						self:LayoutBooks()
+					end)
 end
 
 function Librarian:InitializeKeybindStripDescriptors()
@@ -255,10 +282,6 @@ function Librarian:OnMouseExit(buttonPart)
 end
 
 function Librarian:FormatClockTime(time)
-    if(CLOCK_FORMAT == nil) then
-        CLOCK_FORMAT = (GetCVar("Language.2") == "en") and TIME_FORMAT_PRECISION_TWELVE_HOUR or TIME_FORMAT_PRECISION_TWENTY_FOUR_HOUR
-    end
-
     local midnightSeconds = GetSecondsSinceMidnight()
     local utcSeconds = GetTimeStamp() % 86400
     local offset = midnightSeconds - utcSeconds
@@ -267,7 +290,7 @@ function Librarian:FormatClockTime(time)
     end
 
     local dateString = GetDateStringFromTimestamp(time)
-    local timeString = ZO_FormatTime((time + offset) % 86400, TIME_FORMAT_STYLE_CLOCK_TIME, CLOCK_FORMAT)
+    local timeString = ZO_FormatTime((time + offset) % 86400, TIME_FORMAT_STYLE_CLOCK_TIME, self.savedVars.setting_time_format)
 	return string.format("%s %s", dateString, timeString)
 end
 
@@ -278,6 +301,26 @@ end
 local function OnAddonLoaded(event, addon)
 	if addon == "Librarian" then
 		Librarian:Initialise()
+	end
+end
+
+function map(tbl, f)
+    local t = {}
+    for k,v in pairs(tbl) do
+        t[k] = f(v)
+    end
+    return t
+end
+
+function getValue(tbl, name)
+	for _,p in pairs(tbl) do
+		if p.name == name then return p.value end
+	end
+end
+
+function getName(tbl, value)
+	for _,p in pairs(tbl) do
+		if p.value == value then return p.name end
 	end
 end
 
