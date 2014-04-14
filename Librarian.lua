@@ -48,7 +48,6 @@ function Librarian:InitialiseSettings()
 	local optionsPanel = LAM:CreateControlPanel("LibrarianOptions", "Librarian")
 
 	local time_formats_list = map(time_formats, function(item) return item.name end)
-	d(self.savedVars.setting_time_format)
 	
 	LAM:AddDropdown(optionsPanel, "LibrarianOptionsTimeFormat", "Time Format",
 					"Select a format to display times in.", time_formats_list,
