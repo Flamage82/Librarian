@@ -7,5 +7,6 @@ Libs\LibStub\LibStub.lua
 Libs\LibAddonMenu-1.0\LibAddonMenu-1.0.lua
 
 Librarian.lua
+LibrarianSettings.lua
 Librarian.xml
 Bindings.xml

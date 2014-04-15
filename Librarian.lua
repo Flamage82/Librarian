@@ -1,5 +1,5 @@
-Librarian = {}
-Librarian.defaults = {books = {}}
+Librarian = ZO_Object:Subclass()
+Librarian.defaults = {}
 
 ZO_CreateStringId("SI_BINDING_NAME_TOGGLE_LIBRARIAN", "Toggle Librarian")
 ZO_CreateStringId("SI_BINDING_NAME_RELOAD_UI", "Reload UI")
@@ -21,21 +21,24 @@ local scrollChild
 local sortField = "Found"
 local sortAscending = false
 
-local time_formats = {
-	{ name = "12 hour", value = TIME_FORMAT_PRECISION_TWELVE_HOUR}, 
-	{ name = "24 hour", value = TIME_FORMAT_PRECISION_TWENTY_FOUR_HOUR}
-}
-
 function Librarian:Initialise()
  	scrollChild = LibrarianFrameScrollContainer:GetNamedChild("ScrollChild")
  	scrollChild:SetAnchor(TOPRIGHT, nil, TOPRIGHT, -5, 0)
-	self.savedVars = ZO_SavedVars:New("Librarian_SavedVariables", 1, nil, self.defaults, nil)
+	self.localSavedVars = ZO_SavedVars:New("Librarian_SavedVariables", 1, nil, self.defaults, nil)
+	self.globalSavedVars = ZO_SavedVars:NewAccountWide("Librarian_SavedVariables", 1, nil, self.defaults, nil)
 
-	if self.savedVars.setting_time_format == nil then
-		self.savedVars.setting_time_format = (GetCVar("Language.2") == "en") and TIME_FORMAT_PRECISION_TWELVE_HOUR or TIME_FORMAT_PRECISION_TWENTY_FOUR_HOUR
-	end
+	if not self.globalSavedVars.settings then self.globalSavedVars.settings = {} end
+	self.settings = self.globalSavedVars.settings
 
-	self:InitialiseSettings()
+	if not self.globalSavedVars.books then self.globalSavedVars.books = {} end
+	self.books = self.globalSavedVars.books
+
+	if not self.localSavedVars.characterBooks then self.localSavedVars.characterBooks = {} end
+	self.characterBooks = self.localSavedVars.characterBooks
+
+	self:UpdateSavedVariables()	
+
+	local settings = LibrarianSettings:New(self.settings)
 
 	self:SortBooks()
 
@@ -43,19 +46,28 @@ function Librarian:Initialise()
 	self:InitializeScene()
 end
 
-function Librarian:InitialiseSettings()
-	local LAM = LibStub("LibAddonMenu-1.0")
-	local optionsPanel = LAM:CreateControlPanel("LibrarianOptions", "Librarian")
+function Librarian:UpdateSavedVariables()
+	if self.localSavedVars.setting_time_format then
+		self.globalSavedVars.settings.time_format = self.localSavedVars.setting_time_format
+		self.localSavedVars.setting_time_format = nil
+	end
 
-	local time_formats_list = map(time_formats, function(item) return item.name end)
-	
-	LAM:AddDropdown(optionsPanel, "LibrarianOptionsTimeFormat", "Time Format",
-					"Select a format to display times in.", time_formats_list,
-					function() return getName(time_formats, self.savedVars.setting_time_format) end,
-					function(format) 
-						self.savedVars.setting_time_format = getValue(time_formats, format)
-						self:LayoutBooks()
-					end)
+	if self.localSavedVars.books then
+		for _,book in ipairs(self.localSavedVars.books) do
+			local timeStamp = book.timeStamp
+			local unread = book.unread
+			self:OpenBook(book)
+			local characterBook = self:FindCharacterBook(book.title)
+			if characterBook then characterBook.timeStamp = timeStamp end
+			local globalBook = self:FindBook(book.title)
+			if globalBook then
+				globalBook.timeStamp = timeStamp
+				globalBook.unread = unread
+			end
+		end
+		self.localSavedVars.books = nil
+		self:LayoutBooks()
+	end
 end
 
 function Librarian:InitializeKeybindStripDescriptors()
@@ -73,7 +85,7 @@ function Librarian:InitializeKeybindStripDescriptors()
             alignment = KEYBIND_STRIP_ALIGN_RIGHT,
             name = function() 
             	if not self.mouseOverRow then return nil end
-            	if self.savedVars.books[self.mouseOverRow.id].unread then 
+            	if self.books[self.mouseOverRow.id].unread then 
             		return GetString(SI_LIBRARIAN_MARK_READ)
             	else 
             		return GetString(SI_LIBRARIAN_MARK_UNREAD)
@@ -84,7 +96,7 @@ function Librarian:InitializeKeybindStripDescriptors()
             	return self.mouseOverRow 
             end,
             callback = function()
-            	local book = self.savedVars.books[self.mouseOverRow.id]
+            	local book = self.books[self.mouseOverRow.id]
                 book.unread = not book.unread
                 if book.unread then self.mouseOverRow.unread:SetAlpha(1) else self.mouseOverRow.unread:SetAlpha(0) end
                 KEYBIND_STRIP:RemoveKeybindButtonGroup(self.keybindStripDescriptor)
@@ -109,21 +121,41 @@ function Librarian:InitializeScene()
 	end
 end
 
-function Librarian:StoreBook(title, body, medium, showTitle)
-	if not self:FindBook(title) then
-		self:AddBook(title, body, medium, showTitle)
+function Librarian:OpenBook(book)
+	if not self:FindCharacterBook(book.title) then
+		self:AddBook(book)
 	end
 end
 
-function Librarian:FindBook(title)
-	for i, book in ipairs(self.savedVars.books) do
+function Librarian:FindCharacterBook(title)
+	for _,book in ipairs(self.characterBooks) do
 		if book.title == title then return book end
 	end
 end
 
-function Librarian:AddBook(title, body, medium, showTitle)
-	local book = {title = title, body = body, medium = medium, showTitle = showTitle, timeStamp = GetTimeStamp(), unread = true}
-	table.insert(self.savedVars.books, book)
+function Librarian:FindBook(title)
+	for _,book in ipairs(self.books) do
+		if book.title == title then return book end
+	end
+end
+
+function Librarian:AddBook(book)
+	local characterBook = {title = book.title, timeStamp = GetTimeStamp()}
+	table.insert(self.characterBooks, characterBook)
+
+	local function IsBookInGlobalData(book)
+		for _,i in ipairs(self.books) do
+			if i.title == book.title then return true end
+		end
+		return false
+	end
+
+	if not IsBookInGlobalData(book) then
+		book.timeStamp = GetTimeStamp()
+		book.unread = true
+		table.insert(self.books, book)
+	end
+	
 	self:SortBooks()
 	d("Book added to Librarian.")
 	--ZO_CenterScreenAnnounce_GetAnnounceObject():AddMessage(EVENT_SKILL_RANK_UPDATE, CSA_EVENT_LARGE_TEXT, SOUNDS.SKILL_LINE_LEVELED_UP, "Test")
@@ -140,11 +172,11 @@ end
 function Librarian:LayoutBooks()
     ZO_Scroll_ResetToTop(LibrarianFrameScrollContainer)
     previousBook = nil
-    for i, book in ipairs(self.savedVars.books) do
+    for i, book in ipairs(self.books) do
 		self:LayoutBook(i, book)
     end
 
-    local bookCount = table.getn(self.savedVars.books)
+    local bookCount = table.getn(self.books)
     LibrarianFrameBookCount:SetText(string.format(GetString(SI_LIBRARIAN_BOOK_COUNT), bookCount))
 end
 
@@ -207,30 +239,30 @@ function Librarian:SortBooks()
 	if sortField == "Unread" then
 		control = LibrarianFrameSortByUnread
 		if sortAscending then
-			table.sort(self.savedVars.books, function(a, b) return a.unread and not b.unread end)
+			table.sort(self.books, function(a, b) return a.unread and not b.unread end)
 		else 
-			table.sort(self.savedVars.books, function(a, b) return not a.unread and b.unread end)
+			table.sort(self.books, function(a, b) return not a.unread and b.unread end)
 		end
 	elseif sortField == "Found" then
 		control = LibrarianFrameSortByTime
 		if sortAscending then
-			table.sort(self.savedVars.books, function(a, b) return a.timeStamp < b.timeStamp end)
+			table.sort(self.books, function(a, b) return a.timeStamp < b.timeStamp end)
 		else
-			table.sort(self.savedVars.books, function(a, b) return a.timeStamp > b.timeStamp end)
+			table.sort(self.books, function(a, b) return a.timeStamp > b.timeStamp end)
 		end
 	elseif sortField == "Title" then
 		control = LibrarianFrameSortByTitle
 		if sortAscending then
-			table.sort(self.savedVars.books, function(a, b) return a.title < b.title end)
+			table.sort(self.books, function(a, b) return a.title < b.title end)
 		else
-			table.sort(self.savedVars.books, function(a, b) return a.title > b.title end)
+			table.sort(self.books, function(a, b) return a.title > b.title end)
 		end
 	elseif sortField == "WordCount" then
 		control = LibrarianFrameSortByWordCount
 		if sortAscending then
-			table.sort(self.savedVars.books, function(a, b) return a.wordCount < b.wordCount end)
+			table.sort(self.books, function(a, b) return a.wordCount < b.wordCount end)
 		else
-			table.sort(self.savedVars.books, function(a, b) return a.wordCount > b.wordCount end)
+			table.sort(self.books, function(a, b) return a.wordCount > b.wordCount end)
 		end
 	end
 
@@ -250,7 +282,7 @@ function Librarian:SortBooks()
 end
 
 function Librarian:ReadBook(id)
-	local book = self.savedVars.books[id]
+	local book = self.books[id]
 	LORE_READER:SetupBook(book.title, book.body, book.medium, book.showTitle)
 	LORE_READER.returnScene = "librarian" 
     SCENE_MANAGER:Show("loreReaderInteraction")
@@ -289,7 +321,7 @@ function Librarian:FormatClockTime(time)
     end
 
     local dateString = GetDateStringFromTimestamp(time)
-    local timeString = ZO_FormatTime((time + offset) % 86400, TIME_FORMAT_STYLE_CLOCK_TIME, self.savedVars.setting_time_format)
+    local timeString = ZO_FormatTime((time + offset) % 86400, TIME_FORMAT_STYLE_CLOCK_TIME, self.settings.time_format)
 	return string.format("%s %s", dateString, timeString)
 end
 
@@ -303,28 +335,9 @@ local function OnAddonLoaded(event, addon)
 	end
 end
 
-function map(tbl, f)
-    local t = {}
-    for k,v in pairs(tbl) do
-        t[k] = f(v)
-    end
-    return t
-end
-
-function getValue(tbl, name)
-	for _,p in pairs(tbl) do
-		if p.name == name then return p.value end
-	end
-end
-
-function getName(tbl, value)
-	for _,p in pairs(tbl) do
-		if p.value == value then return p.name end
-	end
-end
-
 local function OnShowBook(eventCode, title, body, medium, showTitle)
-	Librarian:StoreBook(title, body, medium, showTitle)
+	local book = {title = title, body = body, medium = medium, showTitle = showTitle}
+	Librarian:OpenBook(book)
 end
 
 SLASH_COMMANDS["/librarian"] = SlashCommand
