@@ -95,6 +95,14 @@
                     <Anchor point="TOPLEFT" relativeTo="$(parent)SortBy" relativePoint="BOTTOMLEFT" offsetY="30" />
                     <Anchor point="BOTTOMRIGHT" offsetX="-12" offsetY="0" />
                 </Control>
+                <Button name="$(parent)ShowAllBooks" inherits="ZO_CheckButton">
+                    <Anchor point="BOTTOMLEFT" offsetX="29" offsetY="27"/>
+                    <Controls>
+                        <Label name="$(parent)Text" font="ZoFontGame" color="INTERFACE_COLOR_TYPE_TEXT_COLORS:INTERFACE_TEXT_COLOR_NORMAL" text="SI_LIBRARIAN_SHOW_ALL_BOOKS">
+                            <Anchor point="LEFT" relativePoint="RIGHT" offsetX="5" />
+                        </Label>
+                    </Controls>
+                </Button>
                 <Label name="$(parent)Credit" font="ZoFontGame" color="INTERFACE_COLOR_TYPE_TEXT_COLORS:INTERFACE_TEXT_COLOR_DISABLED">
                     <Anchor point="BOTTOMRIGHT" offsetX="-15" offsetY="27" />
                     <OnInitialized>

@@ -38,6 +38,10 @@ function LibrarianSettings:Initialise(settings)
 		self.settings.time_format = (GetCVar("Language.2") == "en") and TIME_FORMAT_PRECISION_TWELVE_HOUR or TIME_FORMAT_PRECISION_TWENTY_FOUR_HOUR
 	end
 
+	if self.settings.showAllBooks == nil then
+		self.settings.showAllBooks = true
+	end
+
 	local LAM = LibStub("LibAddonMenu-1.0")
 	local optionsPanel = LAM:CreateControlPanel("LibrarianOptions", "Librarian")
 

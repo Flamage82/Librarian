@@ -12,6 +12,7 @@ ZO_CreateStringId("SI_LIBRARIAN_MARK_UNREAD", "Mark as Unread")
 ZO_CreateStringId("SI_LIBRARIAN_MARK_READ", "Mark as Read")
 ZO_CreateStringId("SI_LIBRARIAN_CREDIT", "by Flamage")
 ZO_CreateStringId("SI_LIBRARIAN_BOOK_COUNT", "%d Books")
+ZO_CreateStringId("SI_LIBRARIAN_SHOW_ALL_BOOKS", "Show books for all characters")
 
 local SORT_ARROW_UP = "EsoUI/Art/Miscellaneous/list_sortUp.dds"
 local SORT_ARROW_DOWN = "EsoUI/Art/Miscellaneous/list_sortDown.dds"
@@ -40,6 +41,19 @@ function Librarian:Initialise()
 
 	local settings = LibrarianSettings:New(self.settings)
 
+	local function OnShowAllBooksClicked(checkButton, isChecked)
+        self.settings.showAllBooks = isChecked
+        self:LayoutBooks()
+    end
+
+    local function GetShowAllBooks()
+		return self.settings.showAllBooks
+    end
+
+	local showAllBooks = LibrarianFrameShowAllBooks
+	ZO_CheckButton_SetToggleFunction(showAllBooks, OnShowAllBooksClicked)
+    ZO_CheckButton_SetCheckState(showAllBooks, GetShowAllBooks())
+
 	self:SortBooks()
 
 	self:InitializeKeybindStripDescriptors()
@@ -47,11 +61,13 @@ function Librarian:Initialise()
 end
 
 function Librarian:UpdateSavedVariables()
+	-- Version 1.0.4 - Settings moved to global variables.
 	if self.localSavedVars.setting_time_format then
 		self.globalSavedVars.settings.time_format = self.localSavedVars.setting_time_format
 		self.localSavedVars.setting_time_format = nil
 	end
 
+	-- Version 1.0.4 - Book data moved to global variables
 	if self.localSavedVars.books then
 		for _,book in ipairs(self.localSavedVars.books) do
 			local timeStamp = book.timeStamp
@@ -66,7 +82,7 @@ function Librarian:UpdateSavedVariables()
 			end
 		end
 		self.localSavedVars.books = nil
-		self:LayoutBooks()
+		self:SortBooks()
 	end
 end
 
@@ -172,11 +188,19 @@ end
 function Librarian:LayoutBooks()
     ZO_Scroll_ResetToTop(LibrarianFrameScrollContainer)
     previousBook = nil
-    for i, book in ipairs(self.books) do
+
+    for i, book in ipairs(self.sortedBooks) do
 		self:LayoutBook(i, book)
     end
 
-    local bookCount = table.getn(self.books)
+    local bookCount = 0
+    if self.settings.showAllBooks then
+    	bookCount = table.getn(self.books)
+    else
+    	for _,book in pairs(self.sortedBooks) do
+    		if book.seenByCurrentCharacter then bookCount = bookCount + 1 end
+    	end
+    end
     LibrarianFrameBookCount:SetText(string.format(GetString(SI_LIBRARIAN_BOOK_COUNT), bookCount))
 end
 
@@ -185,29 +209,28 @@ function Librarian:LayoutBook(i, book)
 	if not bookControl then
 		bookControl = CreateControlFromVirtual("LibrarianBook", scrollChild, "LibrarianBook", i)
 		bookControl.id = i
+		bookControl.unread = bookControl:GetNamedChild("Unread")
+		bookControl.found = bookControl:GetNamedChild("Found")
+		bookControl.title = bookControl:GetNamedChild("Title")
+		bookControl.wordCount = bookControl:GetNamedChild("WordCount")
 	end
 	
-	bookControl.unread = bookControl:GetNamedChild("Unread")
-	bookControl.found = bookControl:GetNamedChild("Found")
-	bookControl.title = bookControl:GetNamedChild("Title")
-	bookControl.wordCount = bookControl:GetNamedChild("WordCount")
+	if self.settings.showAllBooks or book.seenByCurrentCharacter then
+		bookControl:SetHidden(false)
+		if book.unread then bookControl.unread:SetAlpha(1) else bookControl.unread:SetAlpha(0) end
+		bookControl.found:SetText(self:FormatClockTime(book.timeStamp))
+		bookControl.title:SetText(book.title)
+		bookControl.wordCount:SetText(book.wordCount)
 
-	if book.unread then bookControl.unread:SetAlpha(1) else bookControl.unread:SetAlpha(0) end
-	bookControl.found:SetText(self:FormatClockTime(book.timeStamp))
-	bookControl.title:SetText(book.title)
-	if not book.wordCount then
-		local wordCount = 0
-		for w in book.body:gmatch("%S+") do wordCount = wordCount + 1 end
-		book.wordCount = wordCount
+		if not previousBook then
+	    	bookControl:SetAnchor(TOPLEFT, scrollChild, TOPLEFT)
+	    else
+	    	bookControl:SetAnchor(TOPLEFT, previousBook, BOTTOMLEFT)
+	    end
+	    previousBook = bookControl
+	else
+		bookControl:SetHidden(true)
 	end
-	bookControl.wordCount:SetText(book.wordCount)
-
-	if not previousBook then
-    	bookControl:SetAnchor(TOPLEFT, scrollChild, TOPLEFT)
-    else
-    	bookControl:SetAnchor(TOPLEFT, previousBook, BOTTOMLEFT)
-    end
-    previousBook = bookControl
 end
 
 function Librarian:InitialiseSortHeader(control, name, tag)
@@ -236,33 +259,52 @@ end
 function Librarian:SortBooks()
 	local control
 
+	self.sortedBooks = {}
+	for _,book in pairs(self.books) do
+		local characterBook = self:FindCharacterBook(book.title)
+		if not book.wordCount then
+			local wordCount = 0
+			for w in book.body:gmatch("%S+") do wordCount = wordCount + 1 end
+			book.wordCount = wordCount
+		end
+		local sortedBook = {title = book.title, unread = book.unread, wordCount = book.wordCount}
+		if characterBook then
+			sortedBook.seenByCurrentCharacter = true
+			sortedBook.timeStamp = characterBook.timeStamp
+		else
+			sortedBook.seenByCurrentCharacter = false
+			sortedBook.timeStamp = book.timeStamp
+		end
+		table.insert(self.sortedBooks, sortedBook)
+	end
+
 	if sortField == "Unread" then
 		control = LibrarianFrameSortByUnread
 		if sortAscending then
-			table.sort(self.books, function(a, b) return a.unread and not b.unread end)
+			table.sort(self.sortedBooks, function(a, b) return a.unread and not b.unread end)
 		else 
-			table.sort(self.books, function(a, b) return not a.unread and b.unread end)
+			table.sort(self.sortedBooks, function(a, b) return not a.unread and b.unread end)
 		end
 	elseif sortField == "Found" then
 		control = LibrarianFrameSortByTime
 		if sortAscending then
-			table.sort(self.books, function(a, b) return a.timeStamp < b.timeStamp end)
+			table.sort(self.sortedBooks, function(a, b) return a.timeStamp < b.timeStamp end)
 		else
-			table.sort(self.books, function(a, b) return a.timeStamp > b.timeStamp end)
+			table.sort(self.sortedBooks, function(a, b) return a.timeStamp > b.timeStamp end)
 		end
 	elseif sortField == "Title" then
 		control = LibrarianFrameSortByTitle
 		if sortAscending then
-			table.sort(self.books, function(a, b) return a.title < b.title end)
+			table.sort(self.sortedBooks, function(a, b) return a.title < b.title end)
 		else
-			table.sort(self.books, function(a, b) return a.title > b.title end)
+			table.sort(self.sortedBooks, function(a, b) return a.title > b.title end)
 		end
 	elseif sortField == "WordCount" then
 		control = LibrarianFrameSortByWordCount
 		if sortAscending then
-			table.sort(self.books, function(a, b) return a.wordCount < b.wordCount end)
+			table.sort(self.sortedBooks, function(a, b) return a.wordCount < b.wordCount end)
 		else
-			table.sort(self.books, function(a, b) return a.wordCount > b.wordCount end)
+			table.sort(self.sortedBooks, function(a, b) return a.wordCount > b.wordCount end)
 		end
 	end
 
@@ -282,7 +324,8 @@ function Librarian:SortBooks()
 end
 
 function Librarian:ReadBook(id)
-	local book = self.books[id]
+	local sortedBook = self.sortedBooks[id]
+	local book = self:FindBook(sortedBook.title)
 	LORE_READER:SetupBook(book.title, book.body, book.medium, book.showTitle)
 	LORE_READER.returnScene = "librarian" 
     SCENE_MANAGER:Show("loreReaderInteraction")
