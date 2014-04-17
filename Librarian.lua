@@ -112,7 +112,8 @@ function Librarian:InitializeKeybindStripDescriptors()
             	return self.mouseOverRow 
             end,
             callback = function()
-            	local book = self.books[self.mouseOverRow.id]
+            	local sortedBook = self.sortedBooks[self.mouseOverRow.id]
+            	local book = self:FindBook(sortedBook.title)
                 book.unread = not book.unread
                 if book.unread then self.mouseOverRow.unread:SetAlpha(1) else self.mouseOverRow.unread:SetAlpha(0) end
                 KEYBIND_STRIP:RemoveKeybindButtonGroup(self.keybindStripDescriptor)
