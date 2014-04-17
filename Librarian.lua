@@ -13,6 +13,7 @@ ZO_CreateStringId("SI_LIBRARIAN_MARK_READ", "Mark as Read")
 ZO_CreateStringId("SI_LIBRARIAN_CREDIT", "by Flamage")
 ZO_CreateStringId("SI_LIBRARIAN_BOOK_COUNT", "%d Books")
 ZO_CreateStringId("SI_LIBRARIAN_SHOW_ALL_BOOKS", "Show books for all characters")
+ZO_CreateStringId("SI_LIBRARIAN_NEW_BOOK_FOUND", "Book added to librarian")
 
 local SORT_ARROW_UP = "EsoUI/Art/Miscellaneous/list_sortUp.dds"
 local SORT_ARROW_DOWN = "EsoUI/Art/Miscellaneous/list_sortDown.dds"
@@ -101,7 +102,9 @@ function Librarian:InitializeKeybindStripDescriptors()
             alignment = KEYBIND_STRIP_ALIGN_RIGHT,
             name = function() 
             	if not self.mouseOverRow then return nil end
-            	if self.books[self.mouseOverRow.id].unread then 
+            	local sortedBook = self.sortedBooks[self.mouseOverRow.id]
+            	local book = self:FindBook(sortedBook.title)
+            	if book.unread then 
             		return GetString(SI_LIBRARIAN_MARK_READ)
             	else 
             		return GetString(SI_LIBRARIAN_MARK_UNREAD)
@@ -174,8 +177,7 @@ function Librarian:AddBook(book)
 	end
 	
 	self:SortBooks()
-	d("Book added to Librarian.")
-	--ZO_CenterScreenAnnounce_GetAnnounceObject():AddMessage(EVENT_SKILL_RANK_UPDATE, CSA_EVENT_LARGE_TEXT, SOUNDS.SKILL_LINE_LEVELED_UP, "Test")
+	ZO_CenterScreenAnnounce_GetAnnounceObject():AddMessage(EVENT_SKILL_RANK_UPDATE, CSA_EVENT_LARGE_TEXT, SOUNDS.BOOK_ACQUIRED, GetString(SI_LIBRARIAN_NEW_BOOK_FOUND))
 end
 
 function Librarian:Toggle()
