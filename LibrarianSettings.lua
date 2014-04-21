@@ -1,8 +1,15 @@
 LibrarianSettings = ZO_Object:Subclass()
 
 local time_formats = {
-	{ name = "12 hour", value = TIME_FORMAT_PRECISION_TWELVE_HOUR}, 
-	{ name = "24 hour", value = TIME_FORMAT_PRECISION_TWENTY_FOUR_HOUR}
+	{ name = "12 hour", value = TIME_FORMAT_PRECISION_TWELVE_HOUR }, 
+	{ name = "24 hour", value = TIME_FORMAT_PRECISION_TWENTY_FOUR_HOUR }
+}
+
+local alert_styles = {
+	{ name = "None", value = 'None', chat = false, alert = false }, 
+	{ name = "Chat only", value = 'Chat', chat = true, alert = false },
+	{ name = "Alert only", value = 'Alert', chat = false, alert = true },
+	{ name = "Both", value = 'Both', chat = true, alert = true },
 }
 
 function LibrarianSettings:New( ... )
@@ -19,15 +26,15 @@ local function map(tbl, f)
     return t
 end
 
-local function getValue(tbl, name)
+local function getSettingByName(tbl, name)
 	for _,p in pairs(tbl) do
-		if p.name == name then return p.value end
+		if p.name == name then return p end
 	end
 end
 
-local function getName(tbl, value)
+local function getSettingByValue(tbl, value)
 	for _,p in pairs(tbl) do
-		if p.value == value then return p.name end
+		if p.value == value then return p end
 	end
 end
 
@@ -42,6 +49,12 @@ function LibrarianSettings:Initialise(settings)
 		self.settings.showAllBooks = true
 	end
 
+	if self.settings.alert_style == nil then
+		self.settings.alert_style = 'Both'
+		self.settings.chatEnabled = true
+		self.settings.alertEnabled = true
+	end
+
 	local LAM = LibStub("LibAddonMenu-1.0")
 	local optionsPanel = LAM:CreateControlPanel("LibrarianOptions", "Librarian")
 
@@ -52,9 +65,24 @@ function LibrarianSettings:Initialise(settings)
 		"Time Format",
 		"Select a format to display times in.", 
 		time_formats_list,
-		function() return getName(time_formats, self.settings.time_format) end,
+		function() return getSettingByValue(time_formats, self.settings.time_format).name end,
 		function(format) 
-			self.settings.time_format = getValue(time_formats, format)
+			self.settings.time_format = getSettingByName(time_formats, format).value
 			Librarian:LayoutBooks()
+		end)
+
+	local alert_styles_list = map(alert_styles, function(item) return item.name end)
+
+	LAM:AddDropdown(optionsPanel, 
+		"LibrarianOptionsAlertSetting", 
+		"Alert Settings",
+		"Select a style of alert.", 
+		alert_styles_list,
+		function() return getSettingByValue(alert_styles, self.settings.alert_style).name end,
+		function(format) 
+			local setting = getSettingByName(alert_styles, format)
+			self.settings.alert_style = setting.value
+			self.settings.chatEnabled = setting.chat
+			self.settings.alertEnabled = setting.alert
 		end)
 end

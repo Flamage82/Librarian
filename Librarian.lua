@@ -177,7 +177,12 @@ function Librarian:AddBook(book)
 	end
 	
 	self:SortBooks()
-	ZO_CenterScreenAnnounce_GetAnnounceObject():AddMessage(EVENT_SKILL_RANK_UPDATE, CSA_EVENT_LARGE_TEXT, SOUNDS.BOOK_ACQUIRED, GetString(SI_LIBRARIAN_NEW_BOOK_FOUND))
+	if self.settings.alertEnabled then
+		ZO_CenterScreenAnnounce_GetAnnounceObject():AddMessage(EVENT_SKILL_RANK_UPDATE, CSA_EVENT_LARGE_TEXT, SOUNDS.BOOK_ACQUIRED, GetString(SI_LIBRARIAN_NEW_BOOK_FOUND))
+	end
+	if self.settings.chatEnabled then
+		d(GetString(SI_LIBRARIAN_NEW_BOOK_FOUND))
+	end
 end
 
 function Librarian:Toggle()
