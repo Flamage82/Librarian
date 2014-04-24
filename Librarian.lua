@@ -1,4 +1,4 @@
-Librarian = ZO_Object:Subclass()
+Librarian = ZO_SortFilterList:Subclass()
 Librarian.defaults = {}
 
 ZO_CreateStringId("SI_BINDING_NAME_TOGGLE_LIBRARIAN", "Toggle Librarian")
@@ -17,15 +17,29 @@ ZO_CreateStringId("SI_LIBRARIAN_NEW_BOOK_FOUND", "Book added to librarian")
 
 local SORT_ARROW_UP = "EsoUI/Art/Miscellaneous/list_sortUp.dds"
 local SORT_ARROW_DOWN = "EsoUI/Art/Miscellaneous/list_sortDown.dds"
+local LIBRARIAN_DATA = 1
 
-local previousBook
-local scrollChild
-local sortField = "Found"
-local sortAscending = false
+local ENTRY_SORT_KEYS =
+{
+    ["title"] = { },
+    ["unread"] = { tiebreaker = "timeStamp" },
+    ["timeStamp"] = { tiebreaker = "title" },
+    ["wordCount"] = { tiebreaker = "title" }
+}
+
+function Librarian:New()
+	local librarian = ZO_SortFilterList.New(self, LibrarianFrame)
+	librarian:Initialise()
+	return librarian
+end
 
 function Librarian:Initialise()
- 	scrollChild = LibrarianFrameScrollContainer:GetNamedChild("ScrollChild")
- 	scrollChild:SetAnchor(TOPRIGHT, nil, TOPRIGHT, -5, 0)
+ 	self.masterList = {}
+    self.sortHeaderGroup:SelectHeaderByKey("timeStamp")
+
+ 	ZO_ScrollList_AddDataType(self.list, LIBRARIAN_DATA, "LibrarianBookRow", 30, function(control, data) self:SetupBookRow(control, data) end)
+ 	ZO_ScrollList_EnableHighlight(self.list, "ZO_ThinListHighlight")
+
 	self.localSavedVars = ZO_SavedVars:New("Librarian_SavedVariables", 1, nil, self.defaults, nil)
 	self.globalSavedVars = ZO_SavedVars:NewAccountWide("Librarian_SavedVariables", 1, nil, self.defaults, nil)
 
@@ -38,13 +52,15 @@ function Librarian:Initialise()
 	if not self.localSavedVars.characterBooks then self.localSavedVars.characterBooks = {} end
 	self.characterBooks = self.localSavedVars.characterBooks
 
+	self.sortFunction = function(listEntry1, listEntry2) return ZO_TableOrderingFunction(listEntry1.data, listEntry2.data, self.currentSortKey, ENTRY_SORT_KEYS, self.currentSortOrder) end
+
 	self:UpdateSavedVariables()	
 
 	local settings = LibrarianSettings:New(self.settings)
 
 	local function OnShowAllBooksClicked(checkButton, isChecked)
         self.settings.showAllBooks = isChecked
-        self:LayoutBooks()
+        self:RefreshFilters()
     end
 
     local function GetShowAllBooks()
@@ -55,10 +71,71 @@ function Librarian:Initialise()
 	ZO_CheckButton_SetToggleFunction(showAllBooks, OnShowAllBooksClicked)
     ZO_CheckButton_SetCheckState(showAllBooks, GetShowAllBooks())
 
-	self:SortBooks()
+	self:RefreshData()
 
 	self:InitializeKeybindStripDescriptors()
 	self:InitializeScene()
+end
+
+function Librarian:SetupBookRow(control, data)
+	control.data = data
+	control.unread = GetControl(control, "Unread")
+	control.found = GetControl(control, "Found")
+	control.title = GetControl(control, "Title")
+	control.wordCount = GetControl(control, "WordCount")
+	
+	control.unread.nonRecolorable = true
+	if data.unread then control.unread:SetAlpha(1) else control.unread:SetAlpha(0) end
+
+	control.found.normalColor = ZO_NORMAL_TEXT
+	control.found:SetText(self:FormatClockTime(data.timeStamp))
+
+	control.title.normalColor = ZO_NORMAL_TEXT
+	control.title:SetText(data.title)
+
+	control.wordCount.normalColor = ZO_NORMAL_TEXT
+	control.wordCount:SetText(data.wordCount)
+
+	ZO_SortFilterList.SetupRow(self, control, data)
+end
+
+function Librarian:BuildMasterList()
+    for i, book in ipairs(self.books) do
+		local bookCopy = {}
+		for k,v in pairs(book) do
+    		bookCopy[k] = v
+  		end
+  		local characterBook = self:FindCharacterBook(book.title)
+  		if characterBook then
+			bookCopy.seenByCurrentCharacter = true
+			bookCopy.timeStamp = characterBook.timeStamp
+		else
+			bookCopy.seenByCurrentCharacter = false
+			bookCopy.timeStamp = book.timeStamp
+		end
+  		self.masterList[i] = bookCopy
+    end
+end
+
+function Librarian:FilterScrollList()
+    local scrollData = ZO_ScrollList_GetDataList(self.list)
+    ZO_ClearNumericallyIndexedTable(scrollData)
+
+    local bookCount = 0
+    for i = 1, #self.masterList do
+        local data = self.masterList[i]
+        if self.settings.showAllBooks or data.seenByCurrentCharacter then
+            table.insert(scrollData, ZO_ScrollList_CreateDataEntry(LIBRARIAN_DATA, data))
+            bookCount = bookCount + 1
+        end
+    end    
+
+	LibrarianFrameBookCount:SetText(string.format(GetString(SI_LIBRARIAN_BOOK_COUNT), bookCount))
+end
+
+function Librarian:SortScrollList()
+    local scrollData = ZO_ScrollList_GetDataList(self.list)
+    table.sort(scrollData, self.sortFunction)
 end
 
 function Librarian:UpdateSavedVariables()
@@ -94,16 +171,18 @@ function Librarian:InitializeKeybindStripDescriptors()
             alignment = KEYBIND_STRIP_ALIGN_RIGHT,
             name = GetString(SI_LORE_LIBRARY_READ),
             keybind = "UI_SHORTCUT_PRIMARY",
+            visible = function() 
+            	return self.mouseOverRow 
+            end,
             callback = function()
-                self:ReadBook(self.mouseOverRow.id)
+                self:ReadBook(self.mouseOverRow.data.title)
             end,
         },
         {
             alignment = KEYBIND_STRIP_ALIGN_RIGHT,
             name = function() 
             	if not self.mouseOverRow then return nil end
-            	local sortedBook = self.sortedBooks[self.mouseOverRow.id]
-            	local book = self:FindBook(sortedBook.title)
+            	local book = self:FindBook(self.mouseOverRow.data.title)
             	if book.unread then 
             		return GetString(SI_LIBRARIAN_MARK_READ)
             	else 
@@ -115,8 +194,7 @@ function Librarian:InitializeKeybindStripDescriptors()
             	return self.mouseOverRow 
             end,
             callback = function()
-            	local sortedBook = self.sortedBooks[self.mouseOverRow.id]
-            	local book = self:FindBook(sortedBook.title)
+            	local book = self:FindBook(self.mouseOverRow.data.title)
                 book.unread = not book.unread
                 if book.unread then self.mouseOverRow.unread:SetAlpha(1) else self.mouseOverRow.unread:SetAlpha(0) end
                 KEYBIND_STRIP:RemoveKeybindButtonGroup(self.keybindStripDescriptor)
@@ -138,50 +216,59 @@ function Librarian:InitializeScene()
 		LIBRARIAN_SCENE:AddFragment(LIBRARIAN_TITLE_FRAGMENT)
 		LIBRARIAN_SCENE:AddFragment(EXPERIENCE_BAR_FRAGMENT)
 		LIBRARIAN_SCENE:AddFragment(CODEX_WINDOW_SOUNDS)
-	end
-end
 
-function Librarian:OpenBook(book)
-	if not self:FindCharacterBook(book.title) then
-		self:AddBook(book)
+		LIBRARIAN_SCENE:RegisterCallback("StateChange", 
+			function(oldState, newState)
+				if(newState == SCENE_SHOWING) then        
+                    KEYBIND_STRIP:AddKeybindButtonGroup(self.keybindStripDescriptor)
+                elseif(newState == SCENE_HIDDEN) then      
+                    KEYBIND_STRIP:RemoveKeybindButtonGroup(self.keybindStripDescriptor)
+                end
+            end)
 	end
 end
 
 function Librarian:FindCharacterBook(title)
-	for _,book in ipairs(self.characterBooks) do
+	if not self.characterBooks then return nil end
+	for _,book in pairs(self.characterBooks) do
 		if book.title == title then return book end
 	end
 end
 
 function Librarian:FindBook(title)
-	for _,book in ipairs(self.books) do
+	for _,book in pairs(self.books) do
 		if book.title == title then return book end
 	end
 end
 
 function Librarian:AddBook(book)
-	local characterBook = {title = book.title, timeStamp = GetTimeStamp()}
-	table.insert(self.characterBooks, characterBook)
+	if not self:FindCharacterBook(book.title) then
+		local characterBook = {title = book.title, timeStamp = GetTimeStamp()}
+		table.insert(self.characterBooks, characterBook)
 
-	local function IsBookInGlobalData(book)
-		for _,i in ipairs(self.books) do
-			if i.title == book.title then return true end
+		local function IsBookInGlobalData(book)
+			for _,i in ipairs(self.books) do
+				if i.title == book.title then return true end
+			end
+			return false
 		end
-		return false
-	end
 
-	if not IsBookInGlobalData(book) then
-		book.timeStamp = GetTimeStamp()
-		book.unread = true
-		table.insert(self.books, book)
-	end
-	
-	self:SortBooks()
-	if self.settings.alertEnabled then
-		ZO_CenterScreenAnnounce_GetAnnounceObject():AddMessage(EVENT_SKILL_RANK_UPDATE, CSA_EVENT_LARGE_TEXT, SOUNDS.BOOK_ACQUIRED, GetString(SI_LIBRARIAN_NEW_BOOK_FOUND))
-	end
-	if self.settings.chatEnabled then
-		d(GetString(SI_LIBRARIAN_NEW_BOOK_FOUND))
+		if not IsBookInGlobalData(book) then
+			book.timeStamp = GetTimeStamp()
+			book.unread = true
+			local wordCount = 0
+			for w in book.body:gmatch("%S+") do wordCount = wordCount + 1 end
+			book.wordCount = wordCount
+			table.insert(self.books, book)
+		end
+		
+		self:RefreshData()
+		if self.settings.alertEnabled then
+			ZO_CenterScreenAnnounce_GetAnnounceObject():AddMessage(EVENT_SKILL_RANK_UPDATE, CSA_EVENT_LARGE_TEXT, SOUNDS.BOOK_ACQUIRED, GetString(SI_LIBRARIAN_NEW_BOOK_FOUND))
+		end
+		if self.settings.chatEnabled then
+			d(GetString(SI_LIBRARIAN_NEW_BOOK_FOUND))
+		end
 	end
 end
 
@@ -193,174 +280,12 @@ function Librarian:Toggle()
 	end	
 end    
 
-function Librarian:LayoutBooks()
-    ZO_Scroll_ResetToTop(LibrarianFrameScrollContainer)
-    previousBook = nil
-
-    for i, book in ipairs(self.sortedBooks) do
-		self:LayoutBook(i, book)
-    end
-
-    local bookCount = 0
-    if self.settings.showAllBooks then
-    	bookCount = table.getn(self.books)
-    else
-    	for _,book in pairs(self.sortedBooks) do
-    		if book.seenByCurrentCharacter then bookCount = bookCount + 1 end
-    	end
-    end
-    LibrarianFrameBookCount:SetText(string.format(GetString(SI_LIBRARIAN_BOOK_COUNT), bookCount))
-end
-
-function Librarian:LayoutBook(i, book)
-	local bookControl = GetControl("LibrarianBook"..i)
-	if not bookControl then
-		bookControl = CreateControlFromVirtual("LibrarianBook", scrollChild, "LibrarianBook", i)
-		bookControl.id = i
-		bookControl.unread = bookControl:GetNamedChild("Unread")
-		bookControl.found = bookControl:GetNamedChild("Found")
-		bookControl.title = bookControl:GetNamedChild("Title")
-		bookControl.wordCount = bookControl:GetNamedChild("WordCount")
-	end
-	
-	if self.settings.showAllBooks or book.seenByCurrentCharacter then
-		bookControl:SetHidden(false)
-		if book.unread then bookControl.unread:SetAlpha(1) else bookControl.unread:SetAlpha(0) end
-		bookControl.found:SetText(self:FormatClockTime(book.timeStamp))
-		bookControl.title:SetText(book.title)
-		bookControl.wordCount:SetText(book.wordCount)
-
-		if not previousBook then
-	    	bookControl:SetAnchor(TOPLEFT, scrollChild, TOPLEFT)
-	    else
-	    	bookControl:SetAnchor(TOPLEFT, previousBook, BOTTOMLEFT)
-	    end
-	    previousBook = bookControl
-	else
-		bookControl:SetHidden(true)
-	end
-end
-
-function Librarian:InitialiseSortHeader(control, name, tag)
-	control.tag = tag
-	local nameControl = GetControl(control, "Name")
-    nameControl:SetFont("ZoFontHeader")
-    nameControl:SetColor(ZO_NORMAL_TEXT:UnpackRGBA())
-    nameControl:SetText(GetString(name))
-    nameControl:SetHorizontalAlignment(alignment or TEXT_ALIGN_LEFT)
-    control.initialDirection = initialDirection or ZO_SORT_ORDER_DOWN
-    control.usesArrow = true
-end
-
-function Librarian:SortBy(control)
-	local field = control.tag
-	if field == sortField then
-		sortAscending = not sortAscending
-	else
-		sortField = field
-		sortAscending = true
-	end
-
-	self:SortBooks()
-end
-
-function Librarian:SortBooks()
-	local control
-
-	self.sortedBooks = {}
-	for _,book in pairs(self.books) do
-		local characterBook = self:FindCharacterBook(book.title)
-		if not book.wordCount then
-			local wordCount = 0
-			for w in book.body:gmatch("%S+") do wordCount = wordCount + 1 end
-			book.wordCount = wordCount
-		end
-		local sortedBook = {title = book.title, unread = book.unread, wordCount = book.wordCount}
-		if characterBook then
-			sortedBook.seenByCurrentCharacter = true
-			sortedBook.timeStamp = characterBook.timeStamp
-		else
-			sortedBook.seenByCurrentCharacter = false
-			sortedBook.timeStamp = book.timeStamp
-		end
-		table.insert(self.sortedBooks, sortedBook)
-	end
-
-	if sortField == "Unread" then
-		control = LibrarianFrameSortByUnread
-		if sortAscending then
-			table.sort(self.sortedBooks, function(a, b) return a.unread and not b.unread end)
-		else 
-			table.sort(self.sortedBooks, function(a, b) return not a.unread and b.unread end)
-		end
-	elseif sortField == "Found" then
-		control = LibrarianFrameSortByTime
-		if sortAscending then
-			table.sort(self.sortedBooks, function(a, b) return a.timeStamp < b.timeStamp end)
-		else
-			table.sort(self.sortedBooks, function(a, b) return a.timeStamp > b.timeStamp end)
-		end
-	elseif sortField == "Title" then
-		control = LibrarianFrameSortByTitle
-		if sortAscending then
-			table.sort(self.sortedBooks, function(a, b) return a.title < b.title end)
-		else
-			table.sort(self.sortedBooks, function(a, b) return a.title > b.title end)
-		end
-	elseif sortField == "WordCount" then
-		control = LibrarianFrameSortByWordCount
-		if sortAscending then
-			table.sort(self.sortedBooks, function(a, b) return a.wordCount < b.wordCount end)
-		else
-			table.sort(self.sortedBooks, function(a, b) return a.wordCount > b.wordCount end)
-		end
-	end
-
-	LibrarianFrameSortByUnread:GetNamedChild("Arrow"):SetHidden(true)
-	LibrarianFrameSortByTime:GetNamedChild("Arrow"):SetHidden(true)
-	LibrarianFrameSortByTitle:GetNamedChild("Arrow"):SetHidden(true)
-
-	local arrow = control:GetNamedChild("Arrow")
-	if sortAscending then
-		arrow:SetTexture(SORT_ARROW_DOWN)
-	else 
-		arrow:SetTexture(SORT_ARROW_UP)
-	end
-	arrow:SetHidden(false)
-
-	self:LayoutBooks()
-end
-
-function Librarian:ReadBook(id)
-	local sortedBook = self.sortedBooks[id]
-	local book = self:FindBook(sortedBook.title)
+function Librarian:ReadBook(title)
+	local book = self:FindBook(title)
 	LORE_READER:SetupBook(book.title, book.body, book.medium, book.showTitle)
 	LORE_READER.returnScene = "librarian" 
     SCENE_MANAGER:Show("loreReaderInteraction")
     PlaySound(LORE_READER.OpenSound)
-end
-
-function Librarian:OnMouseEnter(buttonPart)
-	self.mouseOverRow = buttonPart
-	local highlight = buttonPart:GetNamedChild("Highlight")
-	if highlight then
-		if not highlight.animation then
-	        highlight.animation = ANIMATION_MANAGER:CreateTimelineFromVirtual("ShowOnMouseOverLabelAnimation", highlight)
-	    end
-    	highlight.animation:PlayForward()
-    end
-
-    KEYBIND_STRIP:AddKeybindButtonGroup(self.keybindStripDescriptor)
-end
-
-function Librarian:OnMouseExit(buttonPart)
-	self.mouseOverRow = nil
-	local highlight = buttonPart:GetNamedChild("Highlight")
-	if highlight and highlight.animation then
-        highlight.animation:PlayBackward()
-    end
-
-    KEYBIND_STRIP:RemoveKeybindButtonGroup(self.keybindStripDescriptor)
 end
 
 function Librarian:FormatClockTime(time)
@@ -382,13 +307,25 @@ end
 
 local function OnAddonLoaded(event, addon)
 	if addon == "Librarian" then
-		Librarian:Initialise()
+		LIBRARIAN = Librarian:New()
 	end
 end
 
 local function OnShowBook(eventCode, title, body, medium, showTitle)
 	local book = {title = title, body = body, medium = medium, showTitle = showTitle}
-	Librarian:OpenBook(book)
+	LIBRARIAN:AddBook(book)
+end
+
+function LibrarianRow_OnMouseEnter(control)
+    LIBRARIAN:Row_OnMouseEnter(control)
+end
+
+function LibrarianRow_OnMouseExit(control)
+    LIBRARIAN:Row_OnMouseExit(control)
+end
+
+function LibrarianRow_OnMouseUp(control, button, upInside)
+    LIBRARIAN:ReadBook(control.data.title)
 end
 
 SLASH_COMMANDS["/librarian"] = SlashCommand
