@@ -12,6 +12,7 @@ ZO_CreateStringId("SI_LIBRARIAN_MARK_UNREAD", "Mark as Unread")
 ZO_CreateStringId("SI_LIBRARIAN_MARK_READ", "Mark as Read")
 ZO_CreateStringId("SI_LIBRARIAN_CREDIT", "by Flamage")
 ZO_CreateStringId("SI_LIBRARIAN_BOOK_COUNT", "%d Books")
+ZO_CreateStringId("SI_LIBRARIAN_UNREAD_COUNT", "%s (%d Unread)")
 ZO_CreateStringId("SI_LIBRARIAN_SHOW_ALL_BOOKS", "Show books for all characters")
 ZO_CreateStringId("SI_LIBRARIAN_NEW_BOOK_FOUND", "Book added to librarian")
 
@@ -122,15 +123,19 @@ function Librarian:FilterScrollList()
     ZO_ClearNumericallyIndexedTable(scrollData)
 
     local bookCount = 0
+    local unreadCount = 0
     for i = 1, #self.masterList do
-        local data = self.masterList[i]
-        if self.settings.showAllBooks or data.seenByCurrentCharacter then
-            table.insert(scrollData, ZO_ScrollList_CreateDataEntry(LIBRARIAN_DATA, data))
+        local book = self.masterList[i]
+        if self.settings.showAllBooks or book.seenByCurrentCharacter then
+            table.insert(scrollData, ZO_ScrollList_CreateDataEntry(LIBRARIAN_DATA, book))
             bookCount = bookCount + 1
+            if book.unread then unreadCount = unreadCount + 1 end
         end
     end    
 
-	LibrarianFrameBookCount:SetText(string.format(GetString(SI_LIBRARIAN_BOOK_COUNT), bookCount))
+    local message = string.format(GetString(SI_LIBRARIAN_BOOK_COUNT), bookCount)
+    if unreadCount > 0 then message = string.format(GetString(SI_LIBRARIAN_UNREAD_COUNT), message, unreadCount) end
+	LibrarianFrameBookCount:SetText(message)
 end
 
 function Librarian:SortScrollList()
@@ -199,6 +204,7 @@ function Librarian:InitializeKeybindStripDescriptors()
                 if book.unread then self.mouseOverRow.unread:SetAlpha(1) else self.mouseOverRow.unread:SetAlpha(0) end
                 KEYBIND_STRIP:RemoveKeybindButtonGroup(self.keybindStripDescriptor)
                 KEYBIND_STRIP:AddKeybindButtonGroup(self.keybindStripDescriptor)
+                self:RefreshData()
             end,
         }
     }
