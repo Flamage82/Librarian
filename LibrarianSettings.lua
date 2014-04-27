@@ -68,7 +68,7 @@ function LibrarianSettings:Initialise(settings)
 		function() return getSettingByValue(time_formats, self.settings.time_format).name end,
 		function(format) 
 			self.settings.time_format = getSettingByName(time_formats, format).value
-			Librarian:LayoutBooks()
+			LIBRARIAN:CommitScrollList()
 		end)
 
 	local alert_styles_list = map(alert_styles, function(item) return item.name end)

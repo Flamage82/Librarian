@@ -15,6 +15,7 @@ ZO_CreateStringId("SI_LIBRARIAN_BOOK_COUNT", "%d Books")
 ZO_CreateStringId("SI_LIBRARIAN_UNREAD_COUNT", "%s (%d Unread)")
 ZO_CreateStringId("SI_LIBRARIAN_SHOW_ALL_BOOKS", "Show books for all characters")
 ZO_CreateStringId("SI_LIBRARIAN_NEW_BOOK_FOUND", "Book added to librarian")
+ZO_CreateStringId("SI_LIBRARIAN_NEW_BOOK_FOUND_WITH_TITLE", "Book added to librarian: %s")
 
 local SORT_ARROW_UP = "EsoUI/Art/Miscellaneous/list_sortUp.dds"
 local SORT_ARROW_DOWN = "EsoUI/Art/Miscellaneous/list_sortDown.dds"
@@ -72,10 +73,40 @@ function Librarian:Initialise()
 	ZO_CheckButton_SetToggleFunction(showAllBooks, OnShowAllBooksClicked)
     ZO_CheckButton_SetCheckState(showAllBooks, GetShowAllBooks())
 
+    self:ImportFromLoreLibrary()
 	self:RefreshData()
-
 	self:InitializeKeybindStripDescriptors()
 	self:InitializeScene()
+end
+
+function Librarian:ImportFromLoreLibrary()
+	local hasImportedBooks = false
+	local chatEnabled = self.settings.chatEnabled
+	local alertEnabled = self.settings.alertEnabled
+	self.settings.chatEnabled = true
+	self.settings.alertEnabled = false
+
+	for categoryIndex = 1, GetNumLoreCategories() do
+		local categoryName, numCollections = GetLoreCategoryInfo(categoryIndex)
+		for collectionIndex = 1, numCollections do
+            local collectionName, description, numKnownBooks, totalBooks, hidden = GetLoreCollectionInfo(categoryIndex, collectionIndex)
+            if not hidden then
+            	for bookIndex = 1, totalBooks do
+            		local title, icon, known = GetLoreBookInfo(categoryIndex, collectionIndex, bookIndex)
+            		if known then
+            			if not self:FindCharacterBook(title) then
+            				local body, medium, showTitle = ReadLoreBook(categoryIndex, collectionIndex, bookIndex)
+            				local book = {title = title, body = body, medium = medium, showTitle = showTitle}
+            				self:AddBook(book)
+            			end
+            		end
+            	end
+            end
+        end
+	end
+
+	self.settings.chatEnabled = chatEnabled
+	self.settings.alertEnabled = alertEnabled
 end
 
 function Librarian:SetupBookRow(control, data)
@@ -273,7 +304,7 @@ function Librarian:AddBook(book)
 			ZO_CenterScreenAnnounce_GetAnnounceObject():AddMessage(EVENT_SKILL_RANK_UPDATE, CSA_EVENT_LARGE_TEXT, SOUNDS.BOOK_ACQUIRED, GetString(SI_LIBRARIAN_NEW_BOOK_FOUND))
 		end
 		if self.settings.chatEnabled then
-			d(GetString(SI_LIBRARIAN_NEW_BOOK_FOUND))
+			d(string.format(GetString(SI_LIBRARIAN_NEW_BOOK_FOUND_WITH_TITLE), book.title))
 		end
 	end
 end
