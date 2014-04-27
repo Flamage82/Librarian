@@ -155,7 +155,7 @@ function Librarian:UpdateSavedVariables()
 		for _,book in ipairs(self.localSavedVars.books) do
 			local timeStamp = book.timeStamp
 			local unread = book.unread
-			self:OpenBook(book)
+			self:AddBook(book)
 			local characterBook = self:FindCharacterBook(book.title)
 			if characterBook then characterBook.timeStamp = timeStamp end
 			local globalBook = self:FindBook(book.title)
@@ -165,7 +165,7 @@ function Librarian:UpdateSavedVariables()
 			end
 		end
 		self.localSavedVars.books = nil
-		self:SortBooks()
+		self:RefreshData()
 	end
 end
 
