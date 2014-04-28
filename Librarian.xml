@@ -30,12 +30,26 @@
         </Button>
         <TopLevelControl name="LibrarianFrame" inherits="ZO_RightPanelFootPrint"  hidden="true">
             <Controls>
-                <Label name="$(parent)BookCount" font="ZoFontWindowTitle" color="INTERFACE_COLOR_TYPE_TEXT_COLORS:INTERFACE_TEXT_COLOR_SELECTED" modifyTextType="UPPERCASE">
-                    <Anchor point="TOPRIGHT" offsetX="-15" offsetY="-40" />
+                <Label name="$(parent)BookCount" font="ZoFontHeader3" color="INTERFACE_COLOR_TYPE_TEXT_COLORS:INTERFACE_TEXT_COLOR_NORMAL">
+                    <Anchor point="TOPLEFT" offsetY="10" />
+                </Label>
+                <Backdrop name="$(parent)Search" inherits="ZO_EditBackdrop">
+                    <Anchor point="TOPRIGHT" offsetX="-12" offsetY="10"/>
+                    <Dimensions x="270"/>
+                    <Controls>
+                        <EditBox name="$(parent)Box" inherits="ZO_DefaultEditForBackdrop ZO_EditDefaultText">
+                            <OnInitialized>
+                                ZO_EditDefaultText_Initialize(self, GetString(SI_LIBRARIAN_SEARCH_HINT))
+                            </OnInitialized>
+                        </EditBox>
+                    </Controls>
+                </Backdrop>
+                <Label name="$(parent)SearchLabel" text="SI_LIBRARIAN_FULLTEXT_SEARCH" font="ZoFontGameLargeBold" color="INTERFACE_COLOR_TYPE_TEXT_COLORS:INTERFACE_TEXT_COLOR_NORMAL">
+                    <Anchor point="TOPRIGHT" relativePoint="TOPLEFT" relativeTo="$(parent)Search" offsetX="-5" offsetY="3"/>
                 </Label>
                 <Control name="$(parent)Headers">
-                    <Anchor point="TOPLEFT" relativeTo="$(parent)" offsetY="5" />
-                    <Anchor point="TOPRIGHT" relativeTo="$(parent)" offsetY="5" />
+                    <Anchor point="TOPLEFT" relativeTo="$(parent)" offsetY="40" />
+                    <Anchor point="TOPRIGHT" relativeTo="$(parent)" offsetY="40" />
                     <Dimensions y="32" />
                     <Controls>
                         <Control name="$(parent)Unread" inherits="ZO_SortHeader">
