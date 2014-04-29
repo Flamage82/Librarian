@@ -55,6 +55,10 @@ function LibrarianSettings:Initialise(settings)
 		self.settings.alertEnabled = true
 	end
 
+	if self.settings.showUnreadIndicatorInReader == nil then
+		self.settings.showUnreadIndicatorInReader = true
+	end
+
 	local LAM = LibStub("LibAddonMenu-1.0")
 	local optionsPanel = LAM:CreateControlPanel("LibrarianOptions", "Librarian")
 
@@ -85,4 +89,11 @@ function LibrarianSettings:Initialise(settings)
 			self.settings.chatEnabled = setting.chat
 			self.settings.alertEnabled = setting.alert
 		end)
+
+	LAM:AddCheckbox(optionsPanel, 
+		"LibrarianOptionsUnreadIndicator",
+		"Unread Indicator",
+		"Show unread indicator in book reader", 
+		function() return self.settings.showUnreadIndicatorInReader end, 
+		function(value) self.settings.showUnreadIndicatorInReader = value end)
 end

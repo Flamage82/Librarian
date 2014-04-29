@@ -96,8 +96,14 @@ function Librarian:AddLoreReaderUnreadToggle()
             name = function() 
             	local book = self:FindBook(LORE_READER.titleText)
             	if book.unread then 
+            		if self.settings.showUnreadIndicatorInReader then 
+            			self.unreadIndicator:SetHidden(false) 
+            		else 
+            			self.unreadIndicator:SetHidden(true) 
+            		end
             		return GetString(SI_LIBRARIAN_MARK_READ)
             	else 
+            		self.unreadIndicator:SetHidden(true)
             		return GetString(SI_LIBRARIAN_MARK_UNREAD)
             	end
             end,
@@ -111,6 +117,12 @@ function Librarian:AddLoreReaderUnreadToggle()
         }
         table.insert(LORE_READER.keybindStripDescriptor, toggleKeybind)
     end
+
+    self.unreadIndicator = WINDOW_MANAGER:CreateControl("LibrarianUnreadIndicator", ZO_LoreReaderBookContainer, CT_TEXTURE)
+    self.unreadIndicator:SetAnchor(TOPLEFT, ZO_LoreReaderBookContainerFirstPage, TOPLEFT, -32, 3)
+    self.unreadIndicator:SetDimensions(32, 32)
+    self.unreadIndicator:SetHidden(true)
+    self.unreadIndicator:SetTexture([[EsoUI/Art/Inventory/newitem_icon.dds]])
 end
 
 function Librarian:UpdateSavedVariables()
