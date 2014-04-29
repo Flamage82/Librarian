@@ -85,6 +85,32 @@ function Librarian:Initialise()
 	self:RefreshData()
 	self:InitializeKeybindStripDescriptors()
 	self:InitializeScene()
+	self:AddLoreReaderUnreadToggle()
+end
+
+function Librarian:AddLoreReaderUnreadToggle()
+	if LORE_READER.keybindStripDescriptor then
+		local toggleKeybind =
+		{
+            alignment = KEYBIND_STRIP_ALIGN_RIGHT,
+            name = function() 
+            	local book = self:FindBook(LORE_READER.titleText)
+            	if book.unread then 
+            		return GetString(SI_LIBRARIAN_MARK_READ)
+            	else 
+            		return GetString(SI_LIBRARIAN_MARK_UNREAD)
+            	end
+            end,
+            keybind = "UI_SHORTCUT_SECONDARY",
+            callback = function()
+            	local book = self:FindBook(LORE_READER.titleText)
+                book.unread = not book.unread
+                KEYBIND_STRIP:UpdateKeybindButtonGroup(LORE_READER.keybindStripDescriptor)
+                self:RefreshData()
+            end
+        }
+        table.insert(LORE_READER.keybindStripDescriptor, toggleKeybind)
+    end
 end
 
 function Librarian:UpdateSavedVariables()
@@ -145,9 +171,6 @@ function Librarian:InitializeKeybindStripDescriptors()
             callback = function()
             	local book = self:FindBook(self.mouseOverRow.data.title)
                 book.unread = not book.unread
-                if book.unread then self.mouseOverRow.unread:SetAlpha(1) else self.mouseOverRow.unread:SetAlpha(0) end
-                KEYBIND_STRIP:RemoveKeybindButtonGroup(self.keybindStripDescriptor)
-                KEYBIND_STRIP:AddKeybindButtonGroup(self.keybindStripDescriptor)
                 self:RefreshData()
             end,
         }
