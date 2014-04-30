@@ -95,7 +95,7 @@ function Librarian:AddLoreReaderUnreadToggle()
             alignment = KEYBIND_STRIP_ALIGN_RIGHT,
             name = function() 
             	local book = self:FindBook(LORE_READER.titleText)
-            	if book.unread then 
+            	if not book or book.unread then 
             		if self.settings.showUnreadIndicatorInReader then 
             			self.unreadIndicator:SetHidden(false) 
             		else 
@@ -110,6 +110,7 @@ function Librarian:AddLoreReaderUnreadToggle()
             keybind = "UI_SHORTCUT_SECONDARY",
             callback = function()
             	local book = self:FindBook(LORE_READER.titleText)
+            	if not book then return end
                 book.unread = not book.unread
                 KEYBIND_STRIP:UpdateKeybindButtonGroup(LORE_READER.keybindStripDescriptor)
                 self:RefreshData()
