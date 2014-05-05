@@ -10,7 +10,7 @@ ZO_CreateStringId("SI_LIBRARIAN_SORT_TYPE_TITLE", "Title")
 ZO_CreateStringId("SI_LIBRARIAN_SORT_TYPE_WORD_COUNT", "Words")
 ZO_CreateStringId("SI_LIBRARIAN_MARK_UNREAD", "Mark as Unread")
 ZO_CreateStringId("SI_LIBRARIAN_MARK_READ", "Mark as Read")
-ZO_CreateStringId("SI_LIBRARIAN_CREDIT", "by Flamage")
+ZO_CreateStringId("SI_LIBRARIAN_CREDIT", "Librarian 1.0.16 by Flamage")
 ZO_CreateStringId("SI_LIBRARIAN_BOOK_COUNT", "%d Books")
 ZO_CreateStringId("SI_LIBRARIAN_UNREAD_COUNT", "%s (%d Unread)")
 ZO_CreateStringId("SI_LIBRARIAN_SHOW_ALL_BOOKS", "Show books for all characters")
@@ -18,6 +18,7 @@ ZO_CreateStringId("SI_LIBRARIAN_NEW_BOOK_FOUND", "Book added to librarian")
 ZO_CreateStringId("SI_LIBRARIAN_NEW_BOOK_FOUND_WITH_TITLE", "Book added to librarian: %s")
 ZO_CreateStringId("SI_LIBRARIAN_FULLTEXT_SEARCH", "Full-text Search:")
 ZO_CreateStringId("SI_LIBRARIAN_SEARCH_HINT", "Enter text to search for.")
+ZO_CreateStringId("SI_LIBRARIAN_RELOAD_REMINDER", "ReloadUI suggested to update Librarian database.")
 
 local SORT_ARROW_UP = "EsoUI/Art/Miscellaneous/list_sortUp.dds"
 local SORT_ARROW_DOWN = "EsoUI/Art/Miscellaneous/list_sortDown.dds"
@@ -40,6 +41,7 @@ end
 
 function Librarian:Initialise()
  	self.masterList = {}
+ 	self.newBookCount = 0
     self.sortHeaderGroup:SelectHeaderByKey("timeStamp")
 
  	ZO_ScrollList_AddDataType(self.list, LIBRARIAN_DATA, "LibrarianBookRow", 30, function(control, data) self:SetupBookRow(control, data) end)
@@ -149,6 +151,17 @@ function Librarian:UpdateSavedVariables()
 		end
 		self.localSavedVars.books = nil
 		self:RefreshData()
+	end
+
+	-- Version 1.0.16 - Fixed a couple of settings names.
+	if self.globalSavedVars.settings.alert_style then
+		self.globalSavedVars.settings.alertStyle = self.globalSavedVars.settings.alert_style
+		self.globalSavedVars.settings.alert_style = nil
+	end
+
+	if self.globalSavedVars.settings.time_format then
+		self.globalSavedVars.settings.timeFormat = self.globalSavedVars.settings.time_format
+		self.globalSavedVars.settings.time_format = nil
 	end
 end
 
@@ -342,17 +355,7 @@ end
 
 function Librarian:AddBook(book)
 	if not self:FindCharacterBook(book.title) then
-		local characterBook = {title = book.title, timeStamp = GetTimeStamp()}
-		table.insert(self.characterBooks, characterBook)
-
-		local function IsBookInGlobalData(book)
-			for _,i in ipairs(self.books) do
-				if i.title == book.title then return true end
-			end
-			return false
-		end
-
-		if not IsBookInGlobalData(book) then
+		if not self:FindBook(book.title) then
 			book.timeStamp = GetTimeStamp()
 			book.unread = true
 			local wordCount = 0
@@ -360,6 +363,9 @@ function Librarian:AddBook(book)
 			book.wordCount = wordCount
 			table.insert(self.books, book)
 		end
+
+		local characterBook = { title = book.title, timeStamp = GetTimeStamp() }
+		table.insert(self.characterBooks, characterBook)
 		
 		self:RefreshData()
 		if self.settings.alertEnabled then
@@ -367,6 +373,11 @@ function Librarian:AddBook(book)
 		end
 		if self.settings.chatEnabled then
 			d(string.format(GetString(SI_LIBRARIAN_NEW_BOOK_FOUND_WITH_TITLE), book.title))
+		end
+
+		self.newBookCount = self.newBookCount + 1
+		if self.settings.reloadReminderBookCount > 0 and self.settings.reloadReminderBookCount <= self.newBookCount then
+			d(GetString(SI_LIBRARIAN_RELOAD_REMINDER))
 		end
 	end
 end
@@ -396,7 +407,7 @@ function Librarian:FormatClockTime(time)
     end
 
     local dateString = GetDateStringFromTimestamp(time)
-    local timeString = ZO_FormatTime((time + offset) % 86400, TIME_FORMAT_STYLE_CLOCK_TIME, self.settings.time_format)
+    local timeString = ZO_FormatTime((time + offset) % 86400, TIME_FORMAT_STYLE_CLOCK_TIME, self.settings.timeFormat)
 	return string.format("%s %s", dateString, timeString)
 end
 
@@ -416,7 +427,7 @@ local function OnAddonLoaded(event, addon)
 end
 
 local function OnShowBook(eventCode, title, body, medium, showTitle)
-	local book = {title = title, body = body, medium = medium, showTitle = showTitle}
+	local book = { title = title, body = body, medium = medium, showTitle = showTitle }
 	LIBRARIAN:AddBook(book)
 end
 
