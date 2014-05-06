@@ -72,6 +72,7 @@ function LibrarianSettings:Initialise(settings)
 
 	local LAM = LibStub("LibAddonMenu-1.0")
 	local optionsPanel = LAM:CreateControlPanel("LibrarianOptions", "Librarian")
+	LAM:AddHeader(optionsPanel, "LibrarianOptionsHeader", nil)
 
 	LAM:AddDropdown(optionsPanel, 
 		"LibrarianOptionsTimeFormat", 
