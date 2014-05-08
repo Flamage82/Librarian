@@ -10,7 +10,7 @@ ZO_CreateStringId("SI_LIBRARIAN_SORT_TYPE_TITLE", "Title")
 ZO_CreateStringId("SI_LIBRARIAN_SORT_TYPE_WORD_COUNT", "Words")
 ZO_CreateStringId("SI_LIBRARIAN_MARK_UNREAD", "Mark as Unread")
 ZO_CreateStringId("SI_LIBRARIAN_MARK_READ", "Mark as Read")
-ZO_CreateStringId("SI_LIBRARIAN_CREDIT", "Librarian 1.0.17 by Flamage")
+ZO_CreateStringId("SI_LIBRARIAN_CREDIT", "Librarian 1.0.18 by Flamage")
 ZO_CreateStringId("SI_LIBRARIAN_BOOK_COUNT", "%d Books")
 ZO_CreateStringId("SI_LIBRARIAN_UNREAD_COUNT", "%s (%d Unread)")
 ZO_CreateStringId("SI_LIBRARIAN_SHOW_ALL_BOOKS", "Show books for all characters")
@@ -376,7 +376,7 @@ function Librarian:AddBook(book)
 		end
 
 		self.newBookCount = self.newBookCount + 1
-		if self.settings.reloadReminderBookCount > 0 and self.settings.reloadReminderBookCount <= self.newBookCount then
+		if self.settings.reloadReminderBookCount and self.settings.reloadReminderBookCount > 0 and self.settings.reloadReminderBookCount <= self.newBookCount then
 			d(GetString(SI_LIBRARIAN_RELOAD_REMINDER))
 		end
 	end
