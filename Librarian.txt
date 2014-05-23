@@ -1,6 +1,6 @@
 ## Title: Librarian
 ## Author: Flamage
-## APIVersion: 100003
+## APIVersion: 100004
 ## SavedVariables: Librarian_SavedVariables
 
 Libs\LibStub\LibStub.lua
