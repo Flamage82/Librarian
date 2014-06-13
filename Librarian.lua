@@ -83,7 +83,7 @@ function Librarian:Initialise()
 	ZO_CheckButton_SetToggleFunction(showAllBooks, OnShowAllBooksClicked)
     ZO_CheckButton_SetCheckState(showAllBooks, GetShowAllBooks())
 
-    self:ImportFromLoreLibrary()
+    --self:ImportFromLoreLibrary()
 	self:RefreshData()
 	self:InitializeKeybindStripDescriptors()
 	self:InitializeScene()
