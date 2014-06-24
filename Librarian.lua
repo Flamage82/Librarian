@@ -241,6 +241,9 @@ function Librarian:ImportFromLoreLibrary()
             if not hidden then
             	for bookIndex = 1, totalBooks do
             		local title, icon, known = GetLoreBookInfo(categoryIndex, collectionIndex, bookIndex)
+            		if string.sub(book.title, -1) == "]" then
+						book.title = book.title .. " "
+					end
             		if known then
             			if not self:FindCharacterBook(title) then
             				local body, medium, showTitle = ReadLoreBook(categoryIndex, collectionIndex, bookIndex)
@@ -354,7 +357,15 @@ function Librarian:FindBook(title)
 end
 
 function Librarian:AddBook(book)
+	if string.sub(book.title, -1) == "]" then
+		book.title = book.title .. " "
+	end
+
 	if not self:FindCharacterBook(book.title) then
+		if string.sub(book.body, -1) == "]" then
+			book.body = book.body .. " "
+		end
+
 		if not self:FindBook(book.title) then
 			book.timeStamp = GetTimeStamp()
 			book.unread = true
