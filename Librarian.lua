@@ -10,7 +10,7 @@ ZO_CreateStringId("SI_LIBRARIAN_SORT_TYPE_TITLE", "Title")
 ZO_CreateStringId("SI_LIBRARIAN_SORT_TYPE_WORD_COUNT", "Words")
 ZO_CreateStringId("SI_LIBRARIAN_MARK_UNREAD", "Mark as Unread")
 ZO_CreateStringId("SI_LIBRARIAN_MARK_READ", "Mark as Read")
-ZO_CreateStringId("SI_LIBRARIAN_CREDIT", "Librarian 1.0.18 by Flamage")
+ZO_CreateStringId("SI_LIBRARIAN_CREDIT", "Librarian 1.1.3 by Flamage")
 ZO_CreateStringId("SI_LIBRARIAN_BOOK_COUNT", "%d Books")
 ZO_CreateStringId("SI_LIBRARIAN_UNREAD_COUNT", "%s (%d Unread)")
 ZO_CreateStringId("SI_LIBRARIAN_SHOW_ALL_BOOKS", "Show books for all characters")
@@ -163,6 +163,19 @@ function Librarian:UpdateSavedVariables()
 		self.globalSavedVars.settings.timeFormat = self.globalSavedVars.settings.time_format
 		self.globalSavedVars.settings.time_format = nil
 	end
+
+	-- Version 1.1.3 - SavedVariable hell!
+	for _,book in ipairs(self.globalSavedVars.books) do
+		if type(book.body) == "string" then
+			local newBody = book.body
+			book.body = {}
+			while string.len(newBody) > 1024 do
+				table.insert(book.body, string.sub(newBody, 0, 1024))
+				newBody = string.sub(newBody, 1025)
+			end
+			table.insert(book.body, newBody)
+		end
+	end
 end
 
 function Librarian:InitializeKeybindStripDescriptors()
@@ -213,7 +226,6 @@ function Librarian:InitializeScene()
 		LIBRARIAN_SCENE:AddFragment(RIGHT_BG_FRAGMENT)
 		LIBRARIAN_SCENE:AddFragment(TITLE_FRAGMENT)
 		LIBRARIAN_SCENE:AddFragment(LIBRARIAN_TITLE_FRAGMENT)
-		LIBRARIAN_SCENE:AddFragment(EXPERIENCE_BAR_FRAGMENT)
 		LIBRARIAN_SCENE:AddFragment(CODEX_WINDOW_SOUNDS)
 
 		LIBRARIAN_SCENE:RegisterCallback("StateChange", 
@@ -241,9 +253,6 @@ function Librarian:ImportFromLoreLibrary()
             if not hidden then
             	for bookIndex = 1, totalBooks do
             		local title, icon, known = GetLoreBookInfo(categoryIndex, collectionIndex, bookIndex)
-            		if string.sub(book.title, -1) == "]" then
-						book.title = book.title .. " "
-					end
             		if known then
             			if not self:FindCharacterBook(title) then
             				local body, medium, showTitle = ReadLoreBook(categoryIndex, collectionIndex, bookIndex)
@@ -264,7 +273,11 @@ function Librarian:BuildMasterList()
     for i, book in ipairs(self.books) do
 		local data = {}
 		for k,v in pairs(book) do
-    		data[k] = v
+			if k == "body" then
+				data[k] = table.concat(book.body)
+			else
+				data[k] = v
+			end
   		end
   		data.type = LIBRARIAN_SEARCH
   		local characterBook = self:FindCharacterBook(book.title)
@@ -357,21 +370,22 @@ function Librarian:FindBook(title)
 end
 
 function Librarian:AddBook(book)
-	if string.sub(book.title, -1) == "]" then
-		book.title = book.title .. " "
-	end
-
 	if not self:FindCharacterBook(book.title) then
-		if string.sub(book.body, -1) == "]" then
-			book.body = book.body .. " "
-		end
-
 		if not self:FindBook(book.title) then
 			book.timeStamp = GetTimeStamp()
 			book.unread = true
 			local wordCount = 0
 			for w in book.body:gmatch("%S+") do wordCount = wordCount + 1 end
 			book.wordCount = wordCount
+
+			local newBody = book.body
+			book.body = {}
+			while string.len(newBody) > 1024 do
+				table.insert(book.body, string.sub(newBody, 0, 1024))
+				newBody = string.sub(newBody, 1025)
+			end
+			table.insert(book.body, newBody)
+			
 			table.insert(self.books, book)
 		end
 
@@ -380,7 +394,7 @@ function Librarian:AddBook(book)
 		
 		self:RefreshData()
 		if self.settings.alertEnabled then
-			ZO_CenterScreenAnnounce_GetAnnounceObject():AddMessage(EVENT_SKILL_RANK_UPDATE, CSA_EVENT_LARGE_TEXT, SOUNDS.BOOK_ACQUIRED, GetString(SI_LIBRARIAN_NEW_BOOK_FOUND))
+			CENTER_SCREEN_ANNOUNCE:AddMessage(EVENT_SKILL_RANK_UPDATE, CSA_EVENT_LARGE_TEXT, SOUNDS.BOOK_ACQUIRED, GetString(SI_LIBRARIAN_NEW_BOOK_FOUND))
 		end
 		if self.settings.chatEnabled then
 			d(string.format(GetString(SI_LIBRARIAN_NEW_BOOK_FOUND_WITH_TITLE), book.title))
@@ -403,7 +417,7 @@ end
 
 function Librarian:ReadBook(title)
 	local book = self:FindBook(title)
-	LORE_READER:SetupBook(book.title, book.body, book.medium, book.showTitle)
+	LORE_READER:SetupBook(book.title, table.concat(book.body), book.medium, book.showTitle)
 	LORE_READER.returnScene = "librarian" 
     SCENE_MANAGER:Show("loreReaderInteraction")
     PlaySound(LORE_READER.OpenSound)
