@@ -69,50 +69,68 @@ function LibrarianSettings:Initialise(settings)
 	if self.settings.reloadReminderBookCount == nil then
 		self.settings.reloadReminderBookCount = 5
 	end
+  
+  local panelData = {
+    type = "panel",
+    name = "Librarian",
+    displayName = "Librarian Book Manager",
+    author = "Flamage",
+    version = "1.2.0",
+    slashCommand = "/lo"
+  }
 
-	local LAM = LibStub("LibAddonMenu-1.0")
-	local optionsPanel = LAM:CreateControlPanel("LibrarianOptions", "Librarian")
-	LAM:AddHeader(optionsPanel, "LibrarianOptionsHeader", nil)
-
-	LAM:AddDropdown(optionsPanel, 
-		"LibrarianOptionsTimeFormat", 
-		"Time Format",
-		"Select a format to display times in.", 
-		map(timeFormats, function(item) return item.name end),
-		function() return getSettingByValue(timeFormats, self.settings.timeFormat).name end,
-		function(name) 
-			self.settings.timeFormat = getSettingByName(timeFormats, name).value
-			LIBRARIAN:CommitScrollList()
-		end)
-
-	LAM:AddDropdown(optionsPanel, 
-		"LibrarianOptionsAlertSetting", 
-		"Alert Settings",
-		"Select a style of alert.", 
-		map(alertStyles, function(item) return item.name end),
-		function() return getSettingByValue(alertStyles, self.settings.alertStyle).name end,
-		function(name) 
-			local setting = getSettingByName(alertStyles, name)
-			self.settings.alertStyle = setting.value
-			self.settings.chatEnabled = setting.chat
-			self.settings.alertEnabled = setting.alert
-		end)
-
-	LAM:AddCheckbox(optionsPanel, 
-		"LibrarianOptionsUnreadIndicator",
-		"Unread Indicator",
-		"Show unread indicator in book reader.", 
-		function() return self.settings.showUnreadIndicatorInReader end, 
-		function(value) self.settings.showUnreadIndicatorInReader = value end)
-
-	LAM:AddDropdown(optionsPanel, 
-		"LibrarianOptionsReloadReminder", 
-		"ReloadUI reminder after",
-		"Reminder to /reloadui after this number of new books are discovered.", 
-		map(reloadReminders, function(item) return item.name end),
-		function() return getSettingByValue(reloadReminders, self.settings.reloadReminderBookCount).name end,
-		function(name) 
-			local setting = getSettingByName(reloadReminders, name)
-			self.settings.reloadReminderBookCount = setting.value
-		end)
+  local optionsTable = {
+    [1] = {
+      type = "dropdown",
+      name = "Time Format",
+      tooltip = "Select a format to display times in.",
+      choices = map(timeFormats, function(item) return item.name end),
+      getFunc = function() return getSettingByValue(timeFormats, self.settings.timeFormat).name end,
+      setFunc = function(name) 
+        self.settings.timeFormat = getSettingByName(timeFormats, name).value
+        LIBRARIAN:CommitScrollList()
+      end
+    },
+    [2] = {
+      type = "dropdown",
+      name = "Alert Settings",
+      tooltip = "Select a style of alert.",
+      choices = map(alertStyles, function(item) return item.name end),
+      getFunc = function() return getSettingByValue(alertStyles, self.settings.alertStyle).name end,
+      setFunc = function(name) 
+        local setting = getSettingByName(alertStyles, name)
+        self.settings.alertStyle = setting.value
+        self.settings.chatEnabled = setting.chat
+        self.settings.alertEnabled = setting.alert
+      end
+    },
+    [3] = {
+      type = "dropdown",
+      name = "ReloadUI reminder after",
+      tooltip = "Reminder to /reloadui after this number of new books are discovered.",
+      choices = map(reloadReminders, function(item) return item.name end),
+      getFunc = function() return getSettingByValue(reloadReminders, self.settings.reloadReminderBookCount).name end,
+      setFunc = function(name) 
+        local setting = getSettingByName(reloadReminders, name)
+        self.settings.reloadReminderBookCount = setting.value
+      end
+    },
+    [4] = {
+      type = "checkbox",
+      name = "Unread Indicator",
+      tooltip = "Show an unread indicator in book reader.",
+      getFunc = function() return self.settings.showUnreadIndicatorInReader end,
+      setFunc = function(value) self.settings.showUnreadIndicatorInReader = value end
+    },
+    [5] = {
+      type = "button",
+      name = "Import from Lore Library",
+      tooltip = "Import any missing books from the Lore Library.  Works with all books once Eidetic Memory is unlocked.",
+      func = function() LIBRARIAN:ImportFromLoreLibrary() end
+    }
+  }
+  
+  local LAM = LibStub("LibAddonMenu-2.0")
+  LAM:RegisterAddonPanel("LibrarianOptions", panelData)
+  LAM:RegisterOptionControls("LibrarianOptions", optionsTable)
 end

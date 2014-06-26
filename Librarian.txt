@@ -1,10 +1,11 @@
 ## Title: Librarian
 ## Author: Flamage
-## APIVersion: 100004
+## APIVersion: 100007
 ## SavedVariables: Librarian_SavedVariables
+## OptionalDependsOn: LibAddonMenu-2.0
 
 Libs\LibStub\LibStub.lua
-Libs\LibAddonMenu-1.0\LibAddonMenu-1.0.lua
+Libs\LibAddonMenu-2.0\LibAddonMenu-2.0.lua
 
 Librarian.lua
 LibrarianSettings.lua

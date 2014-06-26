@@ -10,7 +10,7 @@ ZO_CreateStringId("SI_LIBRARIAN_SORT_TYPE_TITLE", "Title")
 ZO_CreateStringId("SI_LIBRARIAN_SORT_TYPE_WORD_COUNT", "Words")
 ZO_CreateStringId("SI_LIBRARIAN_MARK_UNREAD", "Mark as Unread")
 ZO_CreateStringId("SI_LIBRARIAN_MARK_READ", "Mark as Read")
-ZO_CreateStringId("SI_LIBRARIAN_CREDIT", "Librarian 1.1.3 by Flamage")
+ZO_CreateStringId("SI_LIBRARIAN_CREDIT", "Librarian 1.2.0 by Flamage")
 ZO_CreateStringId("SI_LIBRARIAN_BOOK_COUNT", "%d Books")
 ZO_CreateStringId("SI_LIBRARIAN_UNREAD_COUNT", "%s (%d Unread)")
 ZO_CreateStringId("SI_LIBRARIAN_SHOW_ALL_BOOKS", "Show books for all characters")
@@ -19,6 +19,7 @@ ZO_CreateStringId("SI_LIBRARIAN_NEW_BOOK_FOUND_WITH_TITLE", "Book added to libra
 ZO_CreateStringId("SI_LIBRARIAN_FULLTEXT_SEARCH", "Full-text Search:")
 ZO_CreateStringId("SI_LIBRARIAN_SEARCH_HINT", "Enter text to search for.")
 ZO_CreateStringId("SI_LIBRARIAN_RELOAD_REMINDER", "ReloadUI suggested to update Librarian database.")
+ZO_CreateStringId("SI_LIBRARIAN_BACKUP_REMINDER", "Remember to backup your Librarian SavedVariables regularly.  Look up Librarian on ESOUI for instructions.")
 
 local SORT_ARROW_UP = "EsoUI/Art/Miscellaneous/list_sortUp.dds"
 local SORT_ARROW_DOWN = "EsoUI/Art/Miscellaneous/list_sortDown.dds"
