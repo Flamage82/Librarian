@@ -28,7 +28,7 @@
                 </Label>
             </Controls>
         </Button>
-        <TopLevelControl name="LibrarianFrame" inherits="ZO_RightPanelFootPrint"  hidden="true">
+        <TopLevelControl name="LibrarianFrame" inherits="ZO_RightPanelFootPrint" hidden="true">
             <Controls>
                 <Label name="$(parent)BookCount" font="ZoFontHeader3" color="INTERFACE_COLOR_TYPE_TEXT_COLORS:INTERFACE_TEXT_COLOR_NORMAL">
                     <Anchor point="TOPLEFT" offsetY="10" />
@@ -87,6 +87,13 @@
                     <Anchor point="TOPLEFT" relativeTo="$(parent)Headers" relativePoint="BOTTOMLEFT" />
                     <Anchor point="BOTTOMRIGHT" offsetX="-12" offsetY="-29" />
                 </Control>
+                <Label name="$(parent)Message" font="ZoFontGame" horizontalAlignment="center" verticalAlignment="center">
+                    <Anchor point="TOPLEFT" relativeTo="$(parent)Headers" relativePoint="BOTTOMLEFT" />
+                    <Anchor point="BOTTOMRIGHT" offsetX="-12" offsetY="-29" />
+                    <OnInitialized>
+                        self:SetText(GetString(SI_LIBRARIAN_EMPTY_LIBRARY_IMPORT_PROMPT))
+                    </OnInitialized>
+                </Label>
                 <Label name="$(parent)BackupPSA" font="ZoFontGame" color="INTERFACE_COLOR_TYPE_TEXT_COLORS:INTERFACE_TEXT_COLOR_DISABLED">
                     <Anchor point="BOTTOMLEFT" offsetX="29" />
                     <OnInitialized>

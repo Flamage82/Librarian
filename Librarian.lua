@@ -20,6 +20,10 @@ ZO_CreateStringId("SI_LIBRARIAN_FULLTEXT_SEARCH", "Full-text Search:")
 ZO_CreateStringId("SI_LIBRARIAN_SEARCH_HINT", "Enter text to search for.")
 ZO_CreateStringId("SI_LIBRARIAN_RELOAD_REMINDER", "ReloadUI suggested to update Librarian database.")
 ZO_CreateStringId("SI_LIBRARIAN_BACKUP_REMINDER", "Remember to backup your Librarian SavedVariables regularly.  Look up Librarian on ESOUI for instructions.")
+ZO_CreateStringId("SI_LIBRARIAN_EMPTY_LIBRARY_IMPORT_PROMPT", [[It appears your Library is empty.
+Patch 1.3 fixed a bug in the storage of addon data which now needs to be moved back to the correct place.
+Please click the "Import from before patch" button in the Librarian setting menu to perform this migration.
+It is recommended that you backup your Librarian SavedVariables before performing this step as a precaution.]])
 
 local SORT_ARROW_UP = "EsoUI/Art/Miscellaneous/list_sortUp.dds"
 local SORT_ARROW_DOWN = "EsoUI/Art/Miscellaneous/list_sortDown.dds"
@@ -221,7 +225,7 @@ function Librarian:InitializeScene()
 	if not LIBRARIAN_SCENE then
 		LIBRARIAN_TITLE_FRAGMENT = ZO_SetTitleFragment:New(SI_WINDOW_TITLE_LIBRARIAN)
 		LIBRARIAN_SCENE = ZO_Scene:New("librarian", SCENE_MANAGER)
-		LIBRARIAN_SCENE:AddFragmentGroup(FRAGMENT_GROUP.UI_WINDOW)
+		LIBRARIAN_SCENE:AddFragmentGroup(FRAGMENT_GROUP.MOUSE_DRIVEN_UI_WINDOW)
 		LIBRARIAN_SCENE:AddFragmentGroup(FRAGMENT_GROUP.FRAME_TARGET_STANDARD_RIGHT_PANEL)
 		LIBRARIAN_SCENE:AddFragment(ZO_FadeSceneFragment:New(LibrarianFrame))
 		LIBRARIAN_SCENE:AddFragment(RIGHT_BG_FRAGMENT)
@@ -270,7 +274,17 @@ function Librarian:ImportFromLoreLibrary()
 	self.settings.alertEnabled = alertEnabled
 end
 
+function Librarian:ImportFromEmptyAccount()
+	if Librarian_SavedVariables["Default"][""] ~= nil then
+		Librarian_SavedVariables["Default"][GetDisplayName()] = Librarian_SavedVariables["Default"][""]
+	end
+	Librarian_SavedVariables["Default"][""] = nil
+	SLASH_COMMANDS["/reloadui"]()
+end
+
 function Librarian:BuildMasterList()
+	if #self.books > 0 then LibrarianFrameMessage:SetHidden(true) end
+
     for i, book in ipairs(self.books) do
 		local data = {}
 		for k,v in pairs(book) do

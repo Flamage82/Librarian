@@ -127,6 +127,12 @@ function LibrarianSettings:Initialise(settings)
       name = "Import from Lore Library",
       tooltip = "Import any missing books from the Lore Library.  Works with all books once Eidetic Memory is unlocked.",
       func = function() LIBRARIAN:ImportFromLoreLibrary() end
+    },
+    [6] = {
+      type = "button",
+      name = "Import from before patch",
+      tooltip = "Migrate data from before Patch 1.3, where account name was broken.",
+      func = function() LIBRARIAN:ImportFromEmptyAccount() end
     }
   }
   
