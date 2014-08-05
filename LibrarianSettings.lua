@@ -75,7 +75,7 @@ function LibrarianSettings:Initialise(settings)
     name = "Librarian",
     displayName = "Librarian Book Manager",
     author = "Flamage",
-    version = "1.2.0",
+    version = "1.2.3",
     slashCommand = "/lo"
   }
 
