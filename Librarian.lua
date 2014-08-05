@@ -10,7 +10,7 @@ ZO_CreateStringId("SI_LIBRARIAN_SORT_TYPE_TITLE", "Title")
 ZO_CreateStringId("SI_LIBRARIAN_SORT_TYPE_WORD_COUNT", "Words")
 ZO_CreateStringId("SI_LIBRARIAN_MARK_UNREAD", "Mark as Unread")
 ZO_CreateStringId("SI_LIBRARIAN_MARK_READ", "Mark as Read")
-ZO_CreateStringId("SI_LIBRARIAN_CREDIT", "Librarian 1.2.1 by Flamage")
+ZO_CreateStringId("SI_LIBRARIAN_CREDIT", "Librarian 1.2.2 by Flamage")
 ZO_CreateStringId("SI_LIBRARIAN_BOOK_COUNT", "%d Books")
 ZO_CreateStringId("SI_LIBRARIAN_UNREAD_COUNT", "%s (%d Unread)")
 ZO_CreateStringId("SI_LIBRARIAN_SHOW_ALL_BOOKS", "Show books for all characters")
@@ -23,7 +23,8 @@ ZO_CreateStringId("SI_LIBRARIAN_BACKUP_REMINDER", "Remember to backup your Libra
 ZO_CreateStringId("SI_LIBRARIAN_EMPTY_LIBRARY_IMPORT_PROMPT", [[It appears your Library is empty.
 Patch 1.3 fixed a bug in the storage of addon data which now needs to be moved back to the correct place.
 Please click the "Import from before patch" button in the Librarian setting menu to perform this migration.
-It is recommended that you backup your Librarian SavedVariables before performing this step as a precaution.]])
+It is recommended that you backup your Librarian SavedVariables before performing this step as a precaution.
+Librarian settings can be found by pressing Escape to open the main menu, and selecting Settings, Addon Settings, then Librarian.]])
 
 local SORT_ARROW_UP = "EsoUI/Art/Miscellaneous/list_sortUp.dds"
 local SORT_ARROW_DOWN = "EsoUI/Art/Miscellaneous/list_sortDown.dds"
@@ -274,6 +275,10 @@ function Librarian:ImportFromLoreLibrary()
 	self.settings.alertEnabled = alertEnabled
 end
 
+function Librarian:CanImportFromEmptyAccount()
+	return Librarian_SavedVariables["Default"][""] ~= nil
+end
+
 function Librarian:ImportFromEmptyAccount()
 	if Librarian_SavedVariables["Default"][""] ~= nil then
 		Librarian_SavedVariables["Default"][GetDisplayName()] = Librarian_SavedVariables["Default"][""]
@@ -283,7 +288,7 @@ function Librarian:ImportFromEmptyAccount()
 end
 
 function Librarian:BuildMasterList()
-	if #self.books > 0 then LibrarianFrameMessage:SetHidden(true) end
+	if self:CanImportFromEmptyAccount() and #self.books == 0 then LibrarianFrameMessage:SetHidden(false) end
 
     for i, book in ipairs(self.books) do
 		local data = {}
@@ -360,11 +365,11 @@ end
 function Librarian:ProcessBookEntry(stringSearch, data, searchTerm, cache)
     local lowerSearchTerm = searchTerm:lower()
 
-    if(zo_plainstrfind(data.title:lower(), lowerSearchTerm)) then
+    if data.title and zo_plainstrfind(data.title:lower(), lowerSearchTerm) then
         return true
     end
 
-    if(zo_plainstrfind(data.body:lower(), lowerSearchTerm)) then
+    if data.body and zo_plainstrfind(data.body:lower(), lowerSearchTerm) then
         return true
     end
 
@@ -432,7 +437,7 @@ end
 
 function Librarian:ReadBook(title)
 	local book = self:FindBook(title)
-	LORE_READER:SetupBook(book.title, table.concat(book.body), book.medium, book.showTitle)
+	LORE_READER:SetupBook(book.title, book.body and table.concat(book.body), book.medium, book.showTitle)
 	LORE_READER.returnScene = "librarian" 
     SCENE_MANAGER:Show("loreReaderInteraction")
     PlaySound(LORE_READER.OpenSound)
