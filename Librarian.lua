@@ -10,7 +10,7 @@ ZO_CreateStringId("SI_LIBRARIAN_SORT_TYPE_TITLE", "Title")
 ZO_CreateStringId("SI_LIBRARIAN_SORT_TYPE_WORD_COUNT", "Words")
 ZO_CreateStringId("SI_LIBRARIAN_MARK_UNREAD", "Mark as Unread")
 ZO_CreateStringId("SI_LIBRARIAN_MARK_READ", "Mark as Read")
-ZO_CreateStringId("SI_LIBRARIAN_CREDIT", "Librarian 1.2.3 by Flamage")
+ZO_CreateStringId("SI_LIBRARIAN_CREDIT", "Librarian 1.2.4 by Flamage")
 ZO_CreateStringId("SI_LIBRARIAN_BOOK_COUNT", "%d Books")
 ZO_CreateStringId("SI_LIBRARIAN_UNREAD_COUNT", "%s (%d Unread)")
 ZO_CreateStringId("SI_LIBRARIAN_SHOW_ALL_BOOKS", "Show books for all characters")
@@ -171,15 +171,17 @@ function Librarian:UpdateSavedVariables()
 	end
 
 	-- Version 1.1.3 - SavedVariable hell!
-	for _,book in ipairs(self.globalSavedVars.books) do
-		if type(book.body) == "string" then
-			local newBody = book.body
-			book.body = {}
-			while string.len(newBody) > 1024 do
-				table.insert(book.body, string.sub(newBody, 0, 1024))
-				newBody = string.sub(newBody, 1025)
+	for _,account in pairs(Librarian_SavedVariables["Default"]) do
+		for _,book in pairs(account["$AccountWide"].books) do
+			if type(book.body) == "string" then
+				local newBody = book.body
+				book.body = {}
+				while string.len(newBody) > 1024 do
+					table.insert(book.body, string.sub(newBody, 0, 1024))
+					newBody = string.sub(newBody, 1025)
+				end
+				table.insert(book.body, newBody)
 			end
-			table.insert(book.body, newBody)
 		end
 	end
 end
