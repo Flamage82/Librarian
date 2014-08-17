@@ -10,7 +10,7 @@ ZO_CreateStringId("SI_LIBRARIAN_SORT_TYPE_TITLE", "Title")
 ZO_CreateStringId("SI_LIBRARIAN_SORT_TYPE_WORD_COUNT", "Words")
 ZO_CreateStringId("SI_LIBRARIAN_MARK_UNREAD", "Mark as Unread")
 ZO_CreateStringId("SI_LIBRARIAN_MARK_READ", "Mark as Read")
-ZO_CreateStringId("SI_LIBRARIAN_CREDIT", "Librarian 1.2.4 by Flamage")
+ZO_CreateStringId("SI_LIBRARIAN_CREDIT", "Librarian 1.2.5 by Flamage")
 ZO_CreateStringId("SI_LIBRARIAN_BOOK_COUNT", "%d Books")
 ZO_CreateStringId("SI_LIBRARIAN_UNREAD_COUNT", "%s (%d Unread)")
 ZO_CreateStringId("SI_LIBRARIAN_SHOW_ALL_BOOKS", "Show books for all characters")
@@ -98,6 +98,16 @@ end
 
 function Librarian:AddLoreReaderUnreadToggle()
 	if LORE_READER.keybindStripDescriptor then
+        -- Special exit button
+        local exitKeybind =
+        {
+            alignment = KEYBIND_STRIP_ALIGN_RIGHT,
+            name = GetString(SI_EXIT_BUTTON),
+            keybind = "UI_SHORTCUT_EXIT",
+            callback = function() SCENE_MANAGER:HideCurrentScene() end,
+        }
+        table.insert(LORE_READER.keybindStripDescriptor, exitKeybind)
+
 		local toggleKeybind =
 		{
             alignment = KEYBIND_STRIP_ALIGN_RIGHT,
@@ -132,6 +142,28 @@ function Librarian:AddLoreReaderUnreadToggle()
     self.unreadIndicator:SetDimensions(32, 32)
     self.unreadIndicator:SetHidden(true)
     self.unreadIndicator:SetTexture([[EsoUI/Art/Inventory/newitem_icon.dds]])
+
+    local function OnSceneStateChange(oldState, newState)
+        if(newState == SCENE_SHOWING) then
+            KEYBIND_STRIP:RemoveKeybindButton(KEYBIND_STRIP.defaultExit)
+            KEYBIND_STRIP:AddKeybindButtonGroup(LORE_READER.keybindStripDescriptor)
+        elseif(newState == SCENE_HIDDEN) then
+            KEYBIND_STRIP:RemoveKeybindButtonGroup(LORE_READER.keybindStripDescriptor)
+            KEYBIND_STRIP:AddKeybindButton(KEYBIND_STRIP.defaultExit)
+        end
+    end
+
+    LORE_READER_INTERACTION_SCENE.callbackRegistry.StateChange[1][3] = true
+    LORE_READER_INTERACTION_SCENE:Clean("StateChange")
+    LORE_READER_INTERACTION_SCENE:RegisterCallback("StateChange", OnSceneStateChange)
+
+    LORE_READER_INVENTORY_SCENE.callbackRegistry.StateChange[1][3] = true
+    LORE_READER_INVENTORY_SCENE:Clean("StateChange")
+    LORE_READER_INVENTORY_SCENE:RegisterCallback("StateChange", OnSceneStateChange)
+
+    LORE_READER_LORE_LIBRARY_SCENE.callbackRegistry.StateChange[1][3] = true
+    LORE_READER_LORE_LIBRARY_SCENE:Clean("StateChange")
+    LORE_READER_LORE_LIBRARY_SCENE:RegisterCallback("StateChange", OnSceneStateChange)
 end
 
 function Librarian:UpdateSavedVariables()
@@ -440,8 +472,7 @@ end
 function Librarian:ReadBook(title)
 	local book = self:FindBook(title)
 	LORE_READER:SetupBook(book.title, book.body and table.concat(book.body), book.medium, book.showTitle)
-	LORE_READER.returnScene = "librarian" 
-    SCENE_MANAGER:Show("loreReaderInteraction")
+    SCENE_MANAGER:Push("loreReaderInteraction")
     PlaySound(LORE_READER.OpenSound)
 end
 
