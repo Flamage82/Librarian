@@ -69,14 +69,18 @@ function LibrarianSettings:Initialise(settings)
 	if self.settings.reloadReminderBookCount == nil then
 		self.settings.reloadReminderBookCount = 5
 	end
+
+  if self.settings.enableCharacterSpin == nil then
+    self.settings.enableCharacterSpin = true
+  end
   
   local panelData = {
     type = "panel",
     name = "Librarian",
     displayName = "Librarian Book Manager",
     author = "Flamage",
-    version = "1.2.5",
-    slashCommand = "/lo"
+    version = "1.2.6",
+    slashCommand = "/librarianOptions"
   }
 
   local optionsTable = {
@@ -123,6 +127,17 @@ function LibrarianSettings:Initialise(settings)
       setFunc = function(value) self.settings.showUnreadIndicatorInReader = value end
     },
     [5] = {
+      type = "checkbox",
+      name = "Character Spin",
+      tooltip = "Allow the character to spin and face the camera when Librarian is open.",
+      getFunc = function() return self.settings.enableCharacterSpin end,
+      setFunc = function(value) 
+        self.settings.enableCharacterSpin = value 
+        SLASH_COMMANDS["/reloadui"]()
+      end,
+      warning = "UI will be reloaded automatically."
+    },
+    [6] = {
       type = "button",
       name = "Import from Lore Library",
       tooltip = "Import any missing books from the Lore Library.  Works with all books once Eidetic Memory is unlocked.",

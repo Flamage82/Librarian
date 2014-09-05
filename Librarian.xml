@@ -30,6 +30,18 @@
         </Button>
         <TopLevelControl name="LibrarianFrame" inherits="ZO_RightPanelFootPrint" hidden="true">
             <Controls>
+                <Button name="$(parent)Options" mouseOverBlendMode="ADD" inherits="ZO_ButtonBehaviorClickSound">
+                    <Dimensions x="48" y="48" />
+                    <Anchor point="BOTTOMRIGHT" relativePoint="TOPRIGHT" />
+                    <Textures
+                        normal="EsoUI/Art/ChatWindow/chat_options_up.dds"
+                        pressed="EsoUI/Art/ChatWindow/chat_options_down.dds"
+                        mouseOver="EsoUI/Art/ChatWindow/chat_options_over.dds"
+                    />
+                    <OnClicked>
+                        SLASH_COMMANDS["/librarianOptions"]()
+                    </OnClicked>                  
+                </Button>
                 <Label name="$(parent)BookCount" font="ZoFontHeader3" color="INTERFACE_COLOR_TYPE_TEXT_COLORS:INTERFACE_TEXT_COLOR_NORMAL">
                     <Anchor point="TOPLEFT" offsetY="10" />
                 </Label>
