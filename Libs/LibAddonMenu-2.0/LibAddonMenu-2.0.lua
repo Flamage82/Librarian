@@ -1,4 +1,4 @@
-﻿--	LibAddonMenu-2.0 & its files © Ryan Lakanen (Seerah)	--
+--	LibAddonMenu-2.0 & its files © Ryan Lakanen (Seerah)	--
 --	All Rights Reserved										--
 --	Permission is granted to use Seerah's LibAddonMenu-2.0	--
 --	in your project. Any modifications to LibAddonMenu-2.0	--
@@ -7,7 +7,7 @@
 
 
 --Register LAM with LibStub
-local MAJOR, MINOR = "LibAddonMenu-2.0", 14
+local MAJOR, MINOR = "LibAddonMenu-2.0", 15
 local lam, oldminor = LibStub:NewLibrary(MAJOR, MINOR)
 if not lam then return end	--the same or newer version of this lib is already loaded into memory 
 
@@ -57,11 +57,7 @@ function lam:OpenToPanel(panel)
 	zo_callLater(function()
 			ZO_GameMenu_InGame.gameMenu.headerControls[locSettings]:SetOpen(true)
 			SCENE_MANAGER:AddFragment(OPTIONS_WINDOW_FRAGMENT)
-			ZO_OptionsWindow_ChangePanels(lam.panelID)
-			if not lam.panelSubCategoryControl then
-				lam.panelSubCategoryControl = _G["ZO_GameMenu_InGameNavigationContainerScrollChildZO_GameMenu_SubCategory"..(lam.panelID + 1)]
-			end
-			ZO_TreeEntry_OnMouseUp(lam.panelSubCategoryControl, true)
+			KEYBOARD_OPTIONS:ChangePanels(lam.panelID)
 			panel:SetHidden(false)
 		end, 200)
 end
@@ -184,10 +180,24 @@ end
 --Usage:
 --	addonID = "string"; the same string passed to :RegisterAddonPanel
 --	optionsTable = table; the table containing all of the options controls and their data
+local UpdateOptionsTable
+
 function lam:RegisterOptionControls(addonID, optionsTable)	--optionsTable = {sliderData, buttonData, etc}
+	UpdateOptionsTable(optionsTable)
 	addonToOptionsMap[addonID] = optionsTable
 end
 
+UpdateOptionsTable = function(optionsTable)
+	for _, widgetData in ipairs(optionsTable) do
+		if widgetData.type == "submenu" then
+			UpdateOptionsTable(widgetData.controls)
+		end
+		if widgetData.tooltipText == nil then
+			widgetData.tooltipText = widgetData.tooltip
+			widgetData.tooltip = nil 
+		end
+	end
+end
 
 --INTERNAL FUNCTION
 --handles switching between LAM's Addon Settings panel and other panels in the Settings menu
@@ -197,7 +207,7 @@ local dummyFunc = function() end
 local panelWindow = ZO_OptionsWindow
 local bgL = ZO_OptionsWindowBGLeft
 local bgR = ZO_OptionsWindowBGLeftBGRight
-local function HandlePanelSwitching(panel)
+local function HandlePanelSwitching(self, panel)
 	if panel == lam.panelID then	--our addon settings panel
 		oldDefaultButton:SetCallback(dummyFunc)
 		oldDefaultButton:SetHidden(true)
@@ -231,7 +241,7 @@ local function CreateAddonSettingsPanel()
 
 		lam.panelID = _G[controlPanelID]
 		
-		ZO_PreHook("ZO_OptionsWindow_ChangePanels", HandlePanelSwitching)
+		ZO_PreHook(ZO_SharedOptions, "ChangePanels", HandlePanelSwitching)
 		
 		LAMSettingsPanelCreated = true
 	end
@@ -294,9 +304,10 @@ local function CreateAddonList()
 			if self.currentlySelected then self.currentlySelected:SetHidden(false) end
 		end)
 	
-	list.controlType = OPTIONS_CUSTOM
-	list.panel = lam.panelID
-	
+	list.data = {
+		controlType = OPTIONS_CUSTOM,
+		panel = lam.panelID,
+	}
 	ZO_OptionsWindow_InitializeControl(list)
 
 	return list
@@ -306,4 +317,3 @@ end
 --INITIALIZING
 CreateAddonSettingsPanel()
 CreateAddonList()
-

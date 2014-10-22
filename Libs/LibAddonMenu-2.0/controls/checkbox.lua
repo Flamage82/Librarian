@@ -12,7 +12,7 @@
 }	]]
 
 
-local widgetVersion = 5
+local widgetVersion = 6
 local LAM = LibStub("LibAddonMenu-2.0")
 if not LAM:RegisterWidget("checkbox", widgetVersion) then return end
 
@@ -107,7 +107,6 @@ function LAMCreateControl.checkbox(parent, checkboxData, controlName)
 	local control = wm:CreateTopLevelWindow(controlName or checkboxData.reference)
 	control:SetParent(parent.scroll or parent)
 	control:SetMouseEnabled(true)
-	control.tooltipText = checkboxData.tooltip
 	control:SetHandler("OnMouseEnter", OnMouseEnter)
 	control:SetHandler("OnMouseExit", OnMouseExit)
 	control:SetHandler("OnMouseUp", function(control)

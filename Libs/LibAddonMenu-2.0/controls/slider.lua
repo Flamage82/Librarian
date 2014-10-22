@@ -15,7 +15,7 @@
 }	]]
 
 
-local widgetVersion = 3
+local widgetVersion = 4
 local LAM = LibStub("LibAddonMenu-2.0")
 if not LAM:RegisterWidget("slider", widgetVersion) then return end
 
@@ -77,7 +77,6 @@ function LAMCreateControl.slider(parent, sliderData, controlName)
 		control:SetDimensions(510, 40)
 	end
 	control:SetMouseEnabled(true)
-	control.tooltipText = sliderData.tooltip
 	control:SetHandler("OnMouseEnter", ZO_Options_OnMouseEnter)
 	control:SetHandler("OnMouseExit", ZO_Options_OnMouseExit)
 	
