@@ -6,7 +6,7 @@
 	reference = "MyAddonSubmenu"	--(optional) unique global reference to control
 }	]]
 
-local widgetVersion = 6
+local widgetVersion = 7
 local LAM = LibStub("LibAddonMenu-2.0")
 if not LAM:RegisterWidget("submenu", widgetVersion) then return end
 
@@ -18,7 +18,8 @@ local tinsert = table.insert
 local function UpdateValue(control)
 	control.label:SetText(control.data.name)
 	if control.data.tooltip then
-		control.label.tooltipText = control.data.tooltip
+		--control.label.tooltipText = control.data.tooltip
+		control.label.data = {tooltipText = control.data.tooltip}
 	end
 end
 
@@ -47,8 +48,9 @@ function LAMCreateControl.submenu(parent, submenuData, controlName)
 	label:SetWrapMode(TEXT_WRAP_MODE_ELLIPSIS)
 	label:SetText(submenuData.name)
 	label:SetMouseEnabled(true)
-	if submenuData.tooltipText then
-		label.data = { tooltipText = submenuData.tooltipText }
+	if submenuData.tooltip then
+		--label.tooltipText = submenuData.tooltip
+		label.data = {tooltipText = submenuData.tooltip}
 		label:SetHandler("OnMouseEnter", ZO_Options_OnMouseEnter)
 		label:SetHandler("OnMouseExit", ZO_Options_OnMouseExit)
 	end

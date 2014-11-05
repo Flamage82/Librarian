@@ -10,7 +10,7 @@
 
 --add texture coords support?
 
-local widgetVersion = 4
+local widgetVersion = 5
 local LAM = LibStub("LibAddonMenu-2.0")
 if not LAM:RegisterWidget("texture", widgetVersion) then return end
 
@@ -36,9 +36,10 @@ function LAMCreateControl.texture(parent, textureData, controlName)
 	texture:SetDimensions(textureData.imageWidth, textureData.imageHeight)
 	texture:SetTexture(textureData.image)
 	
-	if textureData.tooltipText then
+	if textureData.tooltip then
 		texture:SetMouseEnabled(true)
-		texture.data = { tooltipText = textureData.tooltipText }
+		--texture.tooltipText = textureData.tooltip
+		texture.data = {tooltipText = textureData.tooltip}
 		texture:SetHandler("OnMouseEnter", ZO_Options_OnMouseEnter)
 		texture:SetHandler("OnMouseEnter", ZO_Options_OnMouseExit)
 	end
