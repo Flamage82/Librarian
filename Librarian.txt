@@ -1,6 +1,6 @@
 ## Title: Librarian
 ## Author: Flamage
-## APIVersion: 100010
+## APIVersion: 100011
 ## SavedVariables: Librarian_SavedVariables
 ## OptionalDependsOn: LibAddonMenu-2.0
 
